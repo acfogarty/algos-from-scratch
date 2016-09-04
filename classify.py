@@ -18,6 +18,7 @@ stopwords = stopwords.words('english')
 stopwords += ['.',',',';','?','!','-',':','',"n't","'d","'re","'s","'m"]
 remove_punctuation_map = dict((ord(char), None) for char in string.punctuation)
 vocabSize = 20 #no. of words used as features
+split = 5
 
 def main():
 
@@ -30,22 +31,25 @@ def main():
   #get vocabulary matrix (dim: nsamples*vocabSize)
   vocabulary, sampleVocabMatrix = getVocabMatrix(filenames)
   print '# Created vocabulary matrix of dimensions ',sampleVocabMatrix.shape
-  print sampleVocabMatrix
 
   sampleDataFrame = pd.DataFrame(data = sampleVocabMatrix,
                                  index = filenames,
                                  columns = vocabulary)
   sampleDataFrame['label'] = sampleLabels
-  print sampleDataFrame.info()
 
   #get probabilities P(l) for all l in labels
-  labelProbabilities = getLabelProbabilities(sampleLabels)
+  labelProbabilities = getLabelProbabilities(sampleLabels[:split])
   print '# label probabilities ',labelProbabilities
 
   labels = labelProbabilities.keys() #ordered set
 
   #get conditional probabilities P(f|l) for all l in labels and f in features
-  featureLabelCondProbabilites = getFeatureLabelCondProbabilites(sampleDataFrame,labels)
+  featureLabelCondProbabilites = getFeatureLabelCondProbabilites(sampleDataFrame[:split],labels)
+
+  testDataFrame = sampleDataFrame.ix[split:]
+  print testDataFrame.shape
+
+  testProbabilities = calcPrediction(testDataFrame,labelProbabilities,featureLabelCondProbabilites)
 
 def getFeatures(words,vocabulary):
   '''check which elements of the vocabulary are in the list words'''
@@ -61,7 +65,7 @@ def getDataList(rootdir, labelledDataFile):
   labels = []
   ff = open(labelledDataFile,'r')
   for line in ff:
-    line = line.split()
+    line = line.rsplit(' ',1)
     filenames.append(rootdir+'/'+line[0])
     labels.append(line[1])
   ff.close()
@@ -75,7 +79,8 @@ def getVocabMatrix(filenames):
   # extract contents of each document
   tokensList = []
   for filename in filenames:
-    f = io.open(filename,'r',encoding="utf-8")
+    f = io.open(filename,'r',encoding="latin-1")
+    #f = io.open(filename,'r',encoding="utf-8")
     raw = f.read()
     f.close()
     raw = ''.join(i for i in raw if ord(i)<128) #clean non-ascii characters
@@ -127,6 +132,18 @@ def getFeatureLabelCondProbabilites(sampleDataFrame,labels):
       print 'P(f|l) ',word,label,countFeature/countLabel #TODO add smoothing
       featureLabelCondProbabilites[word][label] = countFeature/countLabel #P(f|l)
   return featureLabelCondProbabilites
+
+def calcPrediction(testDataFrame,labelProbabilities,featureLabelCondProbabilites):
+  for index,sample in testDataFrame.iterrows():
+    prediction = {}
+    for label in labelProbabilities.keys():
+      prediction[label] = labelProbabilities[label]
+      for word in featureLabelCondProbabilites.columns.values:
+        if sample[word]:
+          prediction[label] *= featureLabelCondProbabilites[word][label]
+    print 'known=',sample['label'],'prediction=',prediction
+  #TODO
+  return prediction
  
 if __name__ == '__main__':
   main() 
