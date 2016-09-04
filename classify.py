@@ -16,12 +16,15 @@ def main():
   dataDir = '/Users/fogarty/ereader-backup/train'
   labelledDataFile = dataDir + '/list-ebook-files.txt'
 
-  #get names and classes of all pre-classified ebook files
-  filenames, classes = getDataList(dataDir, labelledDataFile)
+  #get names and labels of all pre-labelified ebook files
+  filenames, labels = getDataList(dataDir, labelledDataFile)
 
   #get vocabulary matrix (dim: nsamples*vocabSize)
   vocabMatrix = getVocabMatrix(filenames)
   print vocabMatrix
+
+  #get P(label) for all labels
+  labelProbabilities = getLabelProbabilities(labels)
 
 def getFeatures(words,vocabulary):
   '''check which elements of the vocabulary are in the list words'''
@@ -32,16 +35,16 @@ def getFeatures(words,vocabulary):
   return features
 
 def getDataList(rootdir, labelledDataFile):
-  '''get names and classes of all pre-classified ebook files'''
+  '''get names and labels of all pre-labelified ebook files'''
   filenames = []
-  classes = []
+  labels = []
   ff = open(labelledDataFile,'r')
   for line in ff:
     line = line.split()
     filenames.append(rootdir+'/'+line[0])
-    classes.append(line[1])
+    labels.append(line[1])
   ff.close()
-  return filenames, classes
+  return filenames, labels
 
 def getVocabMatrix(filenames):
   '''get vocabulary matrix
@@ -76,6 +79,17 @@ def getVocabMatrix(filenames):
   print '# Created vocabulary matrix of dimensions ',vocabMatrix.shape
 
   return vocabMatrix
+
+def getLabelProbabilities(labels):
+  '''calculates percentage for each label in list of all labels'''
+  setOfLabels = set(labels)
+  nLabels = float(len(labels))
+  labelProbabilities = {}
+  for l in setOfLabels:
+    prob = float(labels.count(l))/nLabels
+    labelProbabilities[l] = prob
+  print '# label probabilities ',labelProbabilities
+  return labelProbabilities
  
 if __name__ == '__main__':
   main() 
