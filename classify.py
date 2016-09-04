@@ -16,15 +16,18 @@ def main():
   dataDir = '/Users/fogarty/ereader-backup/train'
   labelledDataFile = dataDir + '/list-ebook-files.txt'
 
-  #get names and labels of all pre-labelified ebook files
-  filenames, labels = getDataList(dataDir, labelledDataFile)
+  #get names and labels of all pre-labeled ebook files
+  filenames, sampleLabels = getDataList(dataDir, labelledDataFile)
 
   #get vocabulary matrix (dim: nsamples*vocabSize)
-  vocabMatrix = getVocabMatrix(filenames)
-  print vocabMatrix
+  sampleVocabMatrix = getVocabMatrix(filenames)
+  print '# Created vocabulary matrix of dimensions ',sampleVocabMatrix.shape
+  print sampleVocabMatrix
 
-  #get P(label) for all labels
-  labelProbabilities = getLabelProbabilities(labels)
+  #get probabilities P(l) for all l in labels
+  labelProbabilities = getLabelProbabilities(sampleLabels)
+  print '# label probabilities ',labelProbabilities
+
 
 def getFeatures(words,vocabulary):
   '''check which elements of the vocabulary are in the list words'''
@@ -48,8 +51,8 @@ def getDataList(rootdir, labelledDataFile):
 
 def getVocabMatrix(filenames):
   '''get vocabulary matrix
-     dimensions: len(vocabulary)*len(nsamples)
-     contents: 1,0'''
+     dimensions: len(nsamples)*len(vocabulary)
+     contents: 1 or 0'''
 
   # extract contents of each document
   tokensList = []
@@ -76,20 +79,19 @@ def getVocabMatrix(filenames):
     vocabMatrix.append(features)
   vocabMatrix = np.asarray(vocabMatrix)
 
-  print '# Created vocabulary matrix of dimensions ',vocabMatrix.shape
-
   return vocabMatrix
 
-def getLabelProbabilities(labels):
+def getLabelProbabilities(sampleLabels):
   '''calculates percentage for each label in list of all labels'''
-  setOfLabels = set(labels)
-  nLabels = float(len(labels))
+  setOfLabels = set(sampleLabels)
+  nSamples = float(len(sampleLabels))
   labelProbabilities = {}
   for l in setOfLabels:
-    prob = float(labels.count(l))/nLabels
+    prob = float(sampleLabels.count(l))/nSamples
     labelProbabilities[l] = prob
-  print '# label probabilities ',labelProbabilities
   return labelProbabilities
+
+    
  
 if __name__ == '__main__':
   main() 
