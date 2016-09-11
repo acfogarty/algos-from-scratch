@@ -22,7 +22,7 @@ import string
 stopwords = stopwords.words('english')
 stopwords += ['.',',',';','?','!','-',':','',"n't","'d","'re","'s","'m"]
 remove_punctuation_map = dict((ord(char), None) for char in string.punctuation)
-vocabSize = 20 #no. of words used as features
+vocabSize = 100 #no. of words used as features
 splitFraction = 0.6 #fraction used for training
 laplaceCorr = False #switch on or off Laplacian correction
 calcPrior = False #True - calc P(l) from training set, False - assume uniform prior
@@ -134,8 +134,9 @@ def getFeatureLabelCondProbabilites(sampleDataFrame,labels):
   vocabulary.remove('classLabel') #the 'classLabel' column is the class label, not a word in the vocabulary 
   nWords = len(vocabulary)
   print '#Working with vocabulary containing ',nWords,' words'
+  print vocabulary
   if laplaceCorr:
-    print '#Using Laplacian correction to avoid 0 probabilities'
+    print '#Using Laplacian correction to avoid zero probabilities'
   featureLabelCondProbabilites = pd.DataFrame(index=labels,columns=vocabulary)
   for label in labels:
     #get samples labelled "label"
@@ -152,6 +153,7 @@ def getFeatureLabelCondProbabilites(sampleDataFrame,labels):
   return featureLabelCondProbabilites
 
 def calcPrediction(testDataFrame,labelProbabilities,featureLabelCondProbabilites):
+  accuracy = 0.0
   for index,sample in testDataFrame.iterrows():
     labelFeatureCondProbabilities = {} #P(l|features)
     for label in labelProbabilities.keys():
@@ -165,8 +167,11 @@ def calcPrediction(testDataFrame,labelProbabilities,featureLabelCondProbabilites
     print labelFeatureCondProbabilities
     probValues=list(labelFeatureCondProbabilities.values())
     prediction=list(labelFeatureCondProbabilities.keys())[probValues.index(max(probValues))]
+    print 'filename: ',index
     print 'known=',sample['classLabel'],'prediction=',prediction
-  #TODO
+    if sample['classLabel'] == prediction: accuracy += 1.0
+  accuracy /= float(len(testDataFrame))
+  print 'accuracy: ',accuracy*100,'%'
   return 0
  
 if __name__ == '__main__':
