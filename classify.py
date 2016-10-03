@@ -22,7 +22,7 @@ import string
 stopwords = stopwords.words('english')
 stopwords += ['.',',',';','?','!','-',':','',"n't","'d","'re","'s","'m"]
 remove_punctuation_map = dict((ord(char), None) for char in string.punctuation)
-vocabSize = 100 #no. of words used as features
+vocabSize = 100 #no. of words used as features (most common words in training set)
 splitFraction = 0.6 #fraction used for training
 laplaceCorr = False #switch on or off Laplacian correction
 calcPrior = False #True - calc P(l) from training set, False - assume uniform prior
@@ -35,8 +35,6 @@ def main():
   #get names and labels of all pre-labeled ebook files
   filenames, sampleLabels = getDataList(dataDir, labelledDataFile)
 
-  split = int(splitFraction*len(filenames))
-
   #get vocabulary matrix (dim: nsamples*vocabSize, entries: T or F)
   vocabulary, sampleVocabMatrix = getVocabMatrix(filenames)
   print '# Created vocabulary matrix of dimensions ',sampleVocabMatrix.shape
@@ -46,8 +44,11 @@ def main():
                                  columns = vocabulary)
   sampleDataFrame['classLabel'] = sampleLabels
 
+  #split into training and test sets 
+  trainDataFrame, testDataFrame = splitTrainTest(sampleDataFrame, splitFraction)
+
   #get probabilities P(l) for all l in labels
-  labelProbabilities = getLabelProbabilities(sampleLabels[:split])
+  labelProbabilities = getLabelProbabilities(trainDataFrame['classLabel'].tolist())
   print '# label probabilities ',labelProbabilities
 
   #get set of unique labels
@@ -55,9 +56,7 @@ def main():
   print '# using labels :',labels
 
   #get conditional probabilities P(f|l) for all l in labels and f in features
-  featureLabelCondProbabilites = getFeatureLabelCondProbabilites(sampleDataFrame[:split],labels)
-
-  testDataFrame = sampleDataFrame.ix[split:]
+  featureLabelCondProbabilites = getFeatureLabelCondProbabilites(trainDataFrame,labels)
 
   testProbabilities = calcPrediction(testDataFrame,labelProbabilities,featureLabelCondProbabilites)
 
@@ -130,6 +129,7 @@ def getLabelProbabilities(sampleLabels):
 def getFeatureLabelCondProbabilites(sampleDataFrame,labels):
   '''calculate conditional probabilities of features on labels:
      P(f|l) for all f and l'''
+
   vocabulary = sampleDataFrame.columns.values.tolist()
   vocabulary.remove('classLabel') #the 'classLabel' column is the class label, not a word in the vocabulary 
   nWords = len(vocabulary)
@@ -173,6 +173,32 @@ def calcPrediction(testDataFrame,labelProbabilities,featureLabelCondProbabilites
   accuracy /= float(len(testDataFrame))
   print 'accuracy: ',accuracy*100,'%'
   return 0
+
+def splitTrainTest(sampleDataFrame, splitFraction):
+  '''split DataFrame into two parts of size splitFraction*total and (1-splitFraction)*total'''
+
+  randnum = np.random.random_sample(len(sampleDataFrame))
+  print len(sampleDataFrame)
+  for r in randnum:
+    print 'r',r
+  #TODO confirm this approach is faster than iterrows and append
+  sampleDataFrame['randnum'] = randnum
+  trainDataFrame = sampleDataFrame[sampleDataFrame['randnum'] < splitFraction]
+  testDataFrame = sampleDataFrame[sampleDataFrame['randnum'] >= splitFraction]
+
+  del trainDataFrame['randnum']
+  del testDataFrame['randnum']
+ 
+  print 'Split sample data into training set of size ', len(trainDataFrame), ' and test set of size ', len(testDataFrame)
+
+  #for index,row in sampleDataFrame.iterrows(): #TODO slow!
+  #  rnum = np.random.rand()
+  #  if rnum < splitFraction:
+  #    trainDataFrame.append(...)
+  #  else:
+  #    testDataFrame.append(...)
+
+  return trainDataFrame, testDataFrame
  
 if __name__ == '__main__':
   main() 
