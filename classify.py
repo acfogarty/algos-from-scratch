@@ -177,12 +177,11 @@ def calcPrediction(testDataFrame,labelProbabilities,featureLabelCondProbabilites
 def splitTrainTest(sampleDataFrame, splitFraction):
   '''split DataFrame into two parts of size splitFraction*total and (1-splitFraction)*total'''
 
+  #assign random no. between 0 and 1 to each sample
   randnum = np.random.random_sample(len(sampleDataFrame))
-  print len(sampleDataFrame)
-  for r in randnum:
-    print 'r',r
-  #TODO confirm this approach is faster than iterrows and append
   sampleDataFrame['randnum'] = randnum
+
+  #split into training set (splitFraction of data) and test set (1 - splitFraction of data)
   trainDataFrame = sampleDataFrame[sampleDataFrame['randnum'] < splitFraction]
   testDataFrame = sampleDataFrame[sampleDataFrame['randnum'] >= splitFraction]
 
@@ -191,6 +190,7 @@ def splitTrainTest(sampleDataFrame, splitFraction):
  
   print 'Split sample data into training set of size ', len(trainDataFrame), ' and test set of size ', len(testDataFrame)
 
+  #TODO confirm above approach is faster than iterrows and append
   #for index,row in sampleDataFrame.iterrows(): #TODO slow!
   #  rnum = np.random.rand()
   #  if rnum < splitFraction:
