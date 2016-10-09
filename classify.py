@@ -8,15 +8,19 @@ from nltk.corpus import stopwords
 import string
 
 #Naive Bayes from scratch (no scikit-learn)
-# l is member of labels
-# f is member of features
-# P(l|features) = P(l,features)/P(features)
-# P(l,features) = P(l)*Product[P(f|l)]
+# l is member of L (labels)
+# f is member of F (features)
+# P(l|F) = P(l,F)/P(F)
+# P(l,F) = P(l)*Product_F[P(f|l)]
+# best label = argmax ( P(l)*Product_F[P(f|l)] )
+# in log form: argmax ( log(P(l)) + Sum_F[log(P(f|l))] )
 
 #reads labelled datafiles
 #partitions into training and test sets
 #trains Naive Bayes classifier
-#uses Laplacian correction (dataset must be big enough!)
+#flag to choose between probabilities and log probabilities
+#flag to switch on/off Laplacian correction (dataset must be big enough!)
+#flag to choose between calculating prior from training set or using uniform prior
 
 # global variables
 stopwords = stopwords.words('english')
@@ -24,10 +28,15 @@ stopwords += ['.',',',';','?','!','-',':','',"n't","'d","'re","'s","'m"]
 remove_punctuation_map = dict((ord(char), None) for char in string.punctuation)
 vocabSize = 100 #no. of words used as features (most common words in training set)
 splitFraction = 0.6 #fraction used for training
-laplaceCorr = False #switch on or off Laplacian correction
+laplaceCorr = True #True - use Laplacian correction
 calcPrior = False #True - calc P(l) from training set, False - assume uniform prior
+logProb = True #True - sum of log probabilities, False - product of probabilities
 
 def main():
+
+  if logProb == True and laplaceCorr == False:
+    print 'Shouldn''t use logProb == True and laplaceCorr == False because log(0) may occur'
+    quit()
 
   dataDir = '/Users/fogarty/ereader-backup/train'
   labelledDataFile = dataDir + '/list-ebook-files.txt'
@@ -153,25 +162,44 @@ def getFeatureLabelCondProbabilites(sampleDataFrame,labels):
   return featureLabelCondProbabilites
 
 def calcPrediction(testDataFrame,labelProbabilities,featureLabelCondProbabilites):
+  '''for each sample in testDataFrame, predict label as argmax( P(l)*Product_F[P(f|l)] ) if global control variable logProb is True, or argmax( log(P(l)) + Sum_F[log(P(f|l))] ) if logProb is False; calculate accuracy'''
+
   accuracy = 0.0
+
+  #loop over test samples
   for index,sample in testDataFrame.iterrows():
+
     labelFeatureCondProbabilities = {} #P(l|features)
+
+    #loop over labels
     for label in labelProbabilities.keys():
+
+      #set P(l)
       if calcPrior: #use calculated P(l)
         labelFeatureCondProbabilities[label] = labelProbabilities[label]
       else: #otherwise assume uniform prior
         labelFeatureCondProbabilities[label] = 1.0
+      if logProb: #convert to log(P(l))
+        labelFeatureCondProbabilities[label] = np.log(labelFeatureCondProbabilities[label])
+
+      #loop over words in vocabulary
       for word in featureLabelCondProbabilites.columns.values:
         if sample[word]:
-          labelFeatureCondProbabilities[label] *= featureLabelCondProbabilites[word][label]
+          if logProb: #calc log(P(l)) + Sum_F[log(P(f|l))]
+            labelFeatureCondProbabilities[label] += np.log(featureLabelCondProbabilites[word][label])
+          else: #calc P(l)*Product_F[P(f|l)]
+            labelFeatureCondProbabilities[label] *= featureLabelCondProbabilites[word][label]
+
     print labelFeatureCondProbabilities
     probValues=list(labelFeatureCondProbabilities.values())
     prediction=list(labelFeatureCondProbabilities.keys())[probValues.index(max(probValues))]
     print 'filename: ',index
     print 'known=',sample['classLabel'],'prediction=',prediction
     if sample['classLabel'] == prediction: accuracy += 1.0
+
   accuracy /= float(len(testDataFrame))
   print 'accuracy: ',accuracy*100,'%'
+
   return 0
 
 def splitTrainTest(sampleDataFrame, splitFraction):
