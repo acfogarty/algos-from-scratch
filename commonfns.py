@@ -101,3 +101,41 @@ def getLabelProbabilities(sampleLabels):
     prob = float(sampleLabels.count(l))/nSamples
     labelProbabilities[l] = prob
   return labelProbabilities
+
+def splitTrainTest(sampleDataFrame, splitFraction):
+  '''split DataFrame into two parts of size splitFraction*total and (1-splitFraction)*total'''
+
+  #assign random no. between 0 and 1 to each sample
+  randnum = np.random.random_sample(len(sampleDataFrame))
+  sampleDataFrame['randnum'] = randnum
+
+  #split into training set (splitFraction of data) and test set (1 - splitFraction of data)
+  trainDataFrame = sampleDataFrame[sampleDataFrame['randnum'] < splitFraction]
+  testDataFrame = sampleDataFrame[sampleDataFrame['randnum'] >= splitFraction]
+
+  del trainDataFrame['randnum']
+  del testDataFrame['randnum']
+ 
+  print 'Split sample data into training set of size ', len(trainDataFrame), ' and test set of size ', len(testDataFrame)
+
+  #TODO confirm above approach is faster than iterrows and append
+  #for index,row in sampleDataFrame.iterrows(): #TODO slow!
+  #  rnum = np.random.rand()
+  #  if rnum < splitFraction:
+  #    trainDataFrame.append(...)
+  #  else:
+  #    testDataFrame.append(...)
+
+  return trainDataFrame, testDataFrame
+
+def fixedSplitTrainTest(sampleDataFrame, splitFraction):
+  '''split DataFrame into two parts of size splitFraction*total and (1-splitFraction)*total, no random shuffle (for debugging)'''
+
+  #split into training set (splitFraction of data) and test set (1 - splitFraction of data)
+  nTrain = int(splitFraction*len(sampleDataFrame))
+  trainDataFrame = sampleDataFrame.ix[:nTrain]
+  testDataFrame = sampleDataFrame.ix[nTrain:]
+
+  print 'Split sample data into training set of size ', len(trainDataFrame), ' and test set of size ', len(testDataFrame)
+
+  return trainDataFrame, testDataFrame

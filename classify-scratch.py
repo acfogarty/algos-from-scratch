@@ -24,7 +24,7 @@ import commonfns
 
 def main():
 
-  vocabSize = 5 #no. of words used as features (most common words in training set)
+  vocabSize = 100 #no. of words used as features (most common words in training set)
   splitFraction = 0.6 #fraction used for training
   laplaceCorr = True #True - use Laplacian correction
   calcPrior = False #True - calc P(l) from training set, False - assume uniform prior
@@ -50,7 +50,8 @@ def main():
   sampleDataFrame['classLabel'] = sampleLabels
 
   #split into training and test sets 
-  trainDataFrame, testDataFrame = splitTrainTest(sampleDataFrame, splitFraction)
+  trainDataFrame, testDataFrame = commonfns.fixedSplitTrainTest(sampleDataFrame, splitFraction)
+  #trainDataFrame, testDataFrame = commonfns.splitTrainTest(sampleDataFrame, splitFraction)
 
   #get probabilities P(l) for all l in labels
   labelProbabilities = commonfns.getLabelProbabilities(trainDataFrame['classLabel'].tolist())
@@ -73,7 +74,6 @@ def getFeatureLabelCondProbabilites(sampleDataFrame,labels,laplaceCorr):
   vocabulary.remove('classLabel') #the 'classLabel' column is the class label, not a word in the vocabulary 
   nWords = len(vocabulary)
   print '#Working with vocabulary containing ',nWords,' words'
-  print vocabulary
   if laplaceCorr:
     print '#Using Laplacian correction to avoid zero probabilities'
   featureLabelCondProbabilites = pd.DataFrame(index=labels,columns=vocabulary)
@@ -82,12 +82,14 @@ def getFeatureLabelCondProbabilites(sampleDataFrame,labels,laplaceCorr):
     samplesInClass = sampleDataFrame[sampleDataFrame['classLabel'] == label]
     #count how many samples are labelled "label"
     countLabel = float(samplesInClass.shape[0]) 
+    print 'count label ',label,countLabel
     if laplaceCorr: countLabel += nWords #Laplacian correction
+    print 'count label ',label,countLabel
     for word in vocabulary:
       #count how many of the samples labelled "label" contain the feature "word"
       countFeature = float(samplesInClass[samplesInClass[word]].shape[0])
       if laplaceCorr: countFeature += 1.0
-      print 'P(f|l) ',word,label,countFeature/countLabel
+      print 'P(f|l) ',word,label,countFeature,countLabel,np.log(countFeature/countLabel)
       featureLabelCondProbabilites[word][label] = countFeature/countLabel #P(f|l)
   return featureLabelCondProbabilites
 
@@ -120,10 +122,10 @@ def calcPrediction(testDataFrame,labelProbabilities,featureLabelCondProbabilites
           else: #calc P(l)*Product_F[P(f|l)]
             labelFeatureCondProbabilities[label] *= featureLabelCondProbabilites[word][label]
 
+    print index
     print labelFeatureCondProbabilities
     probValues=list(labelFeatureCondProbabilities.values())
     prediction=list(labelFeatureCondProbabilities.keys())[probValues.index(max(probValues))]
-    print 'filename: ',index
     print 'known=',sample['classLabel'],'prediction=',prediction
     if sample['classLabel'] == prediction: accuracy += 1.0
 
@@ -131,32 +133,6 @@ def calcPrediction(testDataFrame,labelProbabilities,featureLabelCondProbabilites
   print 'accuracy: ',accuracy*100,'%'
 
   return 0
-
-def splitTrainTest(sampleDataFrame, splitFraction):
-  '''split DataFrame into two parts of size splitFraction*total and (1-splitFraction)*total'''
-
-  #assign random no. between 0 and 1 to each sample
-  randnum = np.random.random_sample(len(sampleDataFrame))
-  sampleDataFrame['randnum'] = randnum
-
-  #split into training set (splitFraction of data) and test set (1 - splitFraction of data)
-  trainDataFrame = sampleDataFrame[sampleDataFrame['randnum'] < splitFraction]
-  testDataFrame = sampleDataFrame[sampleDataFrame['randnum'] >= splitFraction]
-
-  del trainDataFrame['randnum']
-  del testDataFrame['randnum']
- 
-  print 'Split sample data into training set of size ', len(trainDataFrame), ' and test set of size ', len(testDataFrame)
-
-  #TODO confirm above approach is faster than iterrows and append
-  #for index,row in sampleDataFrame.iterrows(): #TODO slow!
-  #  rnum = np.random.rand()
-  #  if rnum < splitFraction:
-  #    trainDataFrame.append(...)
-  #  else:
-  #    testDataFrame.append(...)
-
-  return trainDataFrame, testDataFrame
  
 if __name__ == '__main__':
   main() 
