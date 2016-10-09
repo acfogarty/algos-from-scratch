@@ -43,10 +43,11 @@ def main():
   #get names and labels of all pre-labeled ebook files
   filenames, sampleLabels = commonfns.getDataList(dataDir, labelledDataFile)
 
-  #get vocabulary matrix (dim: nsamples*vocabSize, entries: T or F)
-  vocabulary, sampleVocabMatrix = commonfns.getVocabMatrix(filenames,vocabSize)
-  print '# Created vocabulary matrix of dimensions ',sampleVocabMatrix.shape
+  #get vocabulary 
+  vocabulary = commonfns.getVocabulary(filenames,vocabSize)
+  print '# Created vocabulary of length ',len(vocabulary)
 
+  #get vocabulary matrix (dim: nsamples*vocabSize, entries: 1 or 0)
   countVectorizer = CountVectorizer(input='filename', vocabulary=vocabulary, decode_error='ignore', binary=True, stop_words=commonfns.stopwords)
   sampleVocabMatrix = countVectorizer.fit_transform(filenames)
   print '# Created vocabulary matrix of dimensions ',sampleVocabMatrix.shape

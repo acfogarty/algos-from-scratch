@@ -32,7 +32,7 @@ def getFeatures(words,vocabulary):
   return features
 
 def getVocabMatrix(filenames,vocabSize):
-  '''get vocabulary matrix
+  '''get vocabulary list and vocabulary matrix
      dimensions: len(nsamples)*len(vocabulary)
      contents: 1 or 0'''
 
@@ -66,6 +66,31 @@ def getVocabMatrix(filenames,vocabSize):
   vocabMatrix = np.asarray(vocabMatrix)
 
   return vocabulary, vocabMatrix
+
+def getVocabulary(filenames,vocabSize):
+  '''get vocabulary list consisting of
+  vocabSize most common words across all
+  the files listed in list filenames'''
+
+  # extract contents of each document
+  tokensList = []
+  for filename in filenames:
+    f = io.open(filename,'r',encoding="latin-1")
+    #f = io.open(filename,'r',encoding="utf-8")
+    raw = f.read()
+    f.close()
+    raw = ''.join(i for i in raw if ord(i)<128) #clean non-ascii characters
+    processed = raw.lower()
+    tokens = nltk.word_tokenize(processed)
+    tokensNoStopwords = [w for w in tokens if w not in stopwords]
+  
+    tokensList.append(tokensNoStopwords)
+  
+  #get most common words in the entire set of documents
+  allFd = nltk.FreqDist([y for x in tokensList for y in x]) #flatten
+  vocabulary = [w for w,n in allFd.most_common(vocabSize)]
+
+  return vocabulary
 
 def getLabelProbabilities(sampleLabels):
   '''calculates percentage for each label in list of all labels'''
