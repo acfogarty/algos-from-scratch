@@ -8,7 +8,7 @@ import string
 
 # global variables
 stopwords = stopwords.words('english')
-stopwords += ['.',',',';','?','!','-',':','',"n't","'d","'re","'s","'m","''",'``']
+stopwords += ['.',',',';','?','!','-',':','',"n't","'d","'re","'s","'m","''",'``','...','--',"'","'ll","'ve"]
 remove_punctuation_map = dict((ord(char), None) for char in string.punctuation)
 
 def getDataList(rootdir, labelledDataFile):
