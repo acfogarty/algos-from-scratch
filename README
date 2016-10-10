@@ -1,0 +1,15 @@
+Naive Bayes classifier for unlabelled ebook files
+
+* reads labelled datafiles
+* partitions into training and test sets
+* trains Naive Bayes classifier
+* flag to choose between probabilities and log probabilities
+* flag to switch on/off Laplacian correction (dataset must be big enough!)
+* flag to choose between calculating prior from training set or using uniform prior
+
+Usage:
+
+python classify-skl.py #uses scikit-learn
+python classify-scratch.py #Naive Bayes from scratch
+
+control variables (vocabulary size, train/test split fraction, flags for Laplacian correction, uniform prior, etc.) all hard-coded in .py files
