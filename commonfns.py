@@ -92,14 +92,27 @@ def getVocabulary(filenames,vocabSize):
 
   return vocabulary
 
-def getLabelProbabilities(sampleLabels):
-  '''calculates percentage for each label in list of all labels'''
-  setOfLabels = set(sampleLabels)
-  nSamples = float(len(sampleLabels))
+def getLabelProbabilities(sampleLabels,calcPrior):
+  '''assigns prior probabilities to labels
+     args:
+       sampleLabels (list of str): list of labels 
+       calcPrior (bool): if True, calculate prior probability from the number of occurences of each unique label in sampleLabels, otherwise use uniform distribution
+     returns:
+       prior probability for each unique label in sampleLabels (dict of str: real)
+  '''
+
+  setOfLabels = set(sampleLabels) #set of unique labels
   labelProbabilities = {}
-  for l in setOfLabels:
-    prob = float(sampleLabels.count(l))/nSamples
-    labelProbabilities[l] = prob
+  
+  if calcPrior: #get prior probability from sample
+    nSamples = float(len(sampleLabels))
+    for l in setOfLabels:
+      labelProbabilities[l] = float(sampleLabels.count(l))/nSamples
+  else: #use uniform distribution
+    invNUniqueLabels = 1.0/float(len(setOfLabels)) #give each label equal probability
+    for l in setOfLabels:
+      labelProbabilities[l] = invNUniqueLabels
+
   return labelProbabilities
 
 def splitTrainTest(sampleDataFrame, splitFraction):

@@ -54,7 +54,7 @@ def main():
   #trainDataFrame, testDataFrame = commonfns.splitTrainTest(sampleDataFrame, splitFraction)
 
   #get probabilities P(l) for all l in labels
-  labelProbabilities = commonfns.getLabelProbabilities(trainDataFrame['classLabel'].tolist())
+  labelProbabilities = commonfns.getLabelProbabilities(trainDataFrame['classLabel'].tolist(),calcPrior)
   print '# label probabilities ',labelProbabilities
 
   #get set of unique labels
@@ -64,7 +64,7 @@ def main():
   #get conditional probabilities P(f|l) for all l in labels and f in features
   featureLabelCondProbabilites = getFeatureLabelCondProbabilites(trainDataFrame,labels,laplaceCorr)
 
-  testProbabilities = calcPrediction(testDataFrame,labelProbabilities,featureLabelCondProbabilites,calcPrior,logProb)
+  testProbabilities = calcPrediction(testDataFrame,labelProbabilities,featureLabelCondProbabilites,logProb)
 
 def getFeatureLabelCondProbabilites(sampleDataFrame,labels,laplaceCorr):
   '''calculate conditional probabilities of features on labels:
@@ -80,20 +80,21 @@ def getFeatureLabelCondProbabilites(sampleDataFrame,labels,laplaceCorr):
   for label in labels:
     #get samples labelled "label"
     samplesInClass = sampleDataFrame[sampleDataFrame['classLabel'] == label]
-    #count how many samples are labelled "label"
-    countLabel = float(samplesInClass.shape[0]) 
-    print 'count label ',label,countLabel
-    if laplaceCorr: countLabel += nWords #Laplacian correction
-    print 'count label ',label,countLabel
+    totalCount = 0.0 #total count of all features for label "label"
     for word in vocabulary:
       #count how many of the samples labelled "label" contain the feature "word"
       countFeature = float(samplesInClass[samplesInClass[word]].shape[0])
+      print word, label, 'count (f|l)', countFeature
       if laplaceCorr: countFeature += 1.0
-      print 'P(f|l) ',word,label,countFeature,countLabel,np.log(countFeature/countLabel)
-      featureLabelCondProbabilites[word][label] = countFeature/countLabel #P(f|l)
+      featureLabelCondProbabilites[word][label] = countFeature
+      totalCount += countFeature
+    for word in vocabulary:
+      featureLabelCondProbabilites[word][label] /= totalCount
+      print word, label, 'P(f|l)', featureLabelCondProbabilites[word][label]
+    
   return featureLabelCondProbabilites
 
-def calcPrediction(testDataFrame,labelProbabilities,featureLabelCondProbabilites,calcPrior,logProb):
+def calcPrediction(testDataFrame,labelProbabilities,featureLabelCondProbabilites,logProb):
   '''for each sample in testDataFrame, predict label as argmax( P(l)*Product_F[P(f|l)] ) if global control variable logProb is True, or argmax( log(P(l)) + Sum_F[log(P(f|l))] ) if logProb is False; calculate accuracy'''
 
   accuracy = 0.0
@@ -107,10 +108,7 @@ def calcPrediction(testDataFrame,labelProbabilities,featureLabelCondProbabilites
     for label in labelProbabilities.keys():
 
       #set P(l)
-      if calcPrior: #use calculated P(l)
-        labelFeatureCondProbabilities[label] = labelProbabilities[label]
-      else: #otherwise assume uniform prior
-        labelFeatureCondProbabilities[label] = 1.0
+      labelFeatureCondProbabilities[label] = labelProbabilities[label]
       if logProb: #convert to log(P(l))
         labelFeatureCondProbabilities[label] = np.log(labelFeatureCondProbabilities[label])
 
