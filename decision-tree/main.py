@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 #from common_fns import splitTrainTest
 
+max_node_id = 0  # global variable for tracking id of all nodes created
+
 
 def get_data(filename, target):
     '''target: header of column containing target variable
@@ -42,20 +44,20 @@ def calc_gini_impurity(Y=None):
         gini_imp_node += prob * prob
         # print('In node {}, class {} occurs with frequency {}'.format(node_id, cclass, prob))
     gini_imp_node = 1.0 - gini_imp_node
-    print('Node {}, gini impurity {}'.format(Y, gini_imp_node))
+    # print('Node {}, gini impurity {}'.format(Y, gini_imp_node))
 
     return gini_imp_node, n_samples
 
 
 def calc_gini_impurity_nodes(nodes=None):
     '''calc weighted gini impurity of set of nodes.
-    Nodes should be dict of datasets identified by node_id, e.g.
-    {0: {'X': X_0, 'Y': Y_0}, 1: {'X': X_1, 'Y': Y_1}}'''
+    Nodes should be list of dict of datasets e.g.
+    [{'node_id': 0, 'X': X_0, 'Y': Y_0}, {'node_id': 1, 'X': X_1, 'Y': Y_1}]'''
     gini_impurity = 0.0
     n_total_samples = 0.0
 
-    for node_id in nodes.keys():
-        Y = nodes[node_id]['Y']
+    for node in nodes:
+        Y = node['Y']
         gini_imp_node, n_samples = calc_gini_impurity(Y)
         # weight by number of samples in this node
         gini_impurity += gini_imp_node * n_samples
@@ -77,13 +79,16 @@ def make_binary_split(i_feature=None, split_value=None, X=None, Y=None):
     Y has dimension n_samples
     X has dimensions n_samples * n_features TODO
     return the split datasets and the split value'''
+
+    global max_node_id
+
     mask = X[:, i_feature] > split_value
     X_left = X[mask]  # > split_value
     Y_left = Y[mask]
     X_right = X[~mask]  # <= split_value
     Y_right = Y[~mask]
 
-    return {0: {'X': X_left, 'Y': Y_left}, 1: {'X': X_right, 'Y': Y_right}}
+    return [{'node_id': 0, 'X': X_left, 'Y': Y_left}, {'node_id': 1, 'X': X_right, 'Y': Y_right}]
 
 
 def get_best_split(X=None, Y=None):
@@ -95,7 +100,7 @@ def get_best_split(X=None, Y=None):
         unique_values = set(X[:, i_feature])
         # test a split on every possible split value
         for split_value in unique_values:
-            print('Testing split on value {} of feature {}'.format(split_value, i_feature))
+            # print('Testing split on value {} of feature {}'.format(split_value, i_feature))
             nodes = make_binary_split(i_feature, split_value, X, Y)
             gini_impurity = calc_gini_impurity_nodes(nodes)
             if gini_impurity < best_gini_impurity:
@@ -108,16 +113,57 @@ def get_best_split(X=None, Y=None):
     return best_feature, best_split_value, best_nodes, best_gini_impurity
 
 
-def fit_decision_tree(X=None, Y=None, max_depth=None):
+def fit_decision_tree(X=None, Y=None, max_depth=None, min_sample_per_node=None):
     '''input'''
+
+    global max_node_id
+
     if Y.size != X.shape[0]:
         print('Error! Dimension mismatch between X and Y in fit_decision tree')
         quit()
 
-    tree = {}
-    get_best_split(X=X, Y=Y)
+    root_node = {'node_id': 0, 'X': X, 'Y': Y, 'terminal': False, 'depth': 0}
+    max_node_id += 1
+    attempt_split(root_node, max_depth=max_depth, min_sample_per_node=min_sample_per_node)
 
-    return tree
+    return [root_node]
+
+
+def attempt_split(node=None, max_depth=None, min_sample_per_node=None):
+    '''check if node should be split, based on hyperparameters'''
+
+    global max_node_id
+
+    # print('At start of attempt_split with node {}'.format(node))
+
+    if len(node['Y']) < min_sample_per_node:
+        node['terminal'] = True
+    if node['depth'] >= max_depth:
+        node['terminal'] = True
+    if (len(np.unique(node['Y'])) == 1):  # pure node
+        node['terminal'] = True
+
+    if not node['terminal']:
+        best_feature, best_split_value, best_nodes, best_gini_impurity = get_best_split(X=node['X'], Y=node['Y'])
+        node['split_feature'] = best_feature
+        node['split_value'] = best_split_value
+        node['gini_impurity'] = best_gini_impurity
+        # print('Parent node is now {}'.format(node))
+
+        for child_node in best_nodes:
+
+            child_node['depth'] = node['depth'] + 1
+            child_node['terminal'] = False
+            max_node_id += 1
+            child_node['node_id'] = max_node_id
+
+            # print('attempting split in child node {}'.format(child_node))
+
+            attempt_split(child_node, max_depth=max_depth, min_sample_per_node=min_sample_per_node)
+
+        node['children'] = best_nodes
+
+    # print('At end of attempt node is now {}'.format(node))
 
 
 def predict(tree=None, X=None):
@@ -131,7 +177,8 @@ def calculate_accuracy_score(Y_predict=None, Y_ref=None):
 filename = 'test-data.csv'
 target = 'hospitalised'
 test_fraction = 0.25
-max_depth = 10
+max_depth = 2
+min_sample_per_node = 2
 
 X, Y, X_feature_names = get_data(filename=filename, target=target)
 
@@ -139,7 +186,8 @@ X, Y, X_feature_names = get_data(filename=filename, target=target)
 X_train = X
 Y_train = Y
 
-tree = fit_decision_tree(X=X_train, Y=Y_train, max_depth=max_depth)
+tree = fit_decision_tree(X=X_train, Y=Y_train, max_depth=max_depth, min_sample_per_node=min_sample_per_node)
+print(tree)
 
 Y_predict = predict(tree=tree, X=X_test)
 
