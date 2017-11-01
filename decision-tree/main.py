@@ -201,6 +201,7 @@ def predict_all(tree=None, X=None):
     for sample in X:
         Y.append(predict(root_node, sample))
         print(sample, predict(root_node, sample))
+    Y = np.asarray(Y)
 
     return Y
 
@@ -238,8 +239,38 @@ def terminal_predict(node):
     return classes[np.argmax(counts)]
 
 
-def calculate_accuracy_score(Y_predict=None, Y_ref=None):
-    return score
+def calculate_scores(Y_predict=None, Y_ref=None):
+    '''accuracy = correct / total'''
+
+    if len(Y_predict) != len(Y_ref):
+        print('Error! Arrays of different length in calculate_scores')
+        return 0.0
+
+    true_neg = len(Y_predict[(Y_predict == 0) & (Y_ref == 0)])
+    true_pos = len(Y_predict[(Y_predict == 1) & (Y_ref == 1)])
+    false_neg = len(Y_predict[(Y_predict == 0) & (Y_ref == 1)])
+    false_pos = len(Y_predict[(Y_predict == 1) & (Y_ref == 0)])
+
+    print('            prediction')
+    print('            pos     neg')
+    print('actual pos {:4d}    {:4d}'.format(true_pos, false_neg))
+    print('actual neg {:4d}    {:4d}'.format(false_pos, true_neg))
+
+    accuracy = float(true_neg + true_pos) / float(len(Y_ref))
+    print()
+    print('Accuracy:', accuracy)
+
+    precision = float(true_pos) / float(true_pos + false_pos)
+    print()
+    print('Precision:', precision)
+
+    recall = float(true_pos) / float(true_pos + false_neg)
+    print()
+    print('Recall:', recall)
+
+    f1 = 2 * precision * recall / (precision + recall)
+    print()
+    print('F1 score:', f1)
 
 
 filename = 'test-data.csv'
@@ -262,4 +293,4 @@ print_tree(tree=tree, X_feature_names=X_feature_names)
 
 Y_predict = predict_all(tree=tree, X=X_test)
 
-score = calculate_accuracy_score(Y_predict=Y_predict, Y_ref=Y_test)
+calculate_scores(Y_predict=Y_predict, Y_ref=Y_test)
