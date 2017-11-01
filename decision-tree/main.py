@@ -82,10 +82,10 @@ def make_binary_split(i_feature=None, split_value=None, X=None, Y=None):
 
     global max_node_id
 
-    mask = X[:, i_feature] > split_value
-    X_left = X[mask]  # > split_value
+    mask = X[:, i_feature] < split_value
+    X_left = X[mask]  # < split_value
     Y_left = Y[mask]
-    X_right = X[~mask]  # <= split_value
+    X_right = X[~mask]  # >= split_value
     Y_right = Y[~mask]
 
     return [{'node_id': 0, 'X': X_left, 'Y': Y_left}, {'node_id': 1, 'X': X_right, 'Y': Y_right}]
@@ -108,7 +108,7 @@ def get_best_split(X=None, Y=None):
                 best_split_value = split_value
                 best_gini_impurity = gini_impurity
                 best_nodes = nodes
-    print('Choosing to split on feature {} and value {} into nodes {}. Gini impurity is {}'.format(best_feature, best_split_value, best_nodes, best_gini_impurity))
+    # print('Choosing to split on feature {} and value {} into nodes {}. Gini impurity is {}'.format(best_feature, best_split_value, best_nodes, best_gini_impurity))
 
     return best_feature, best_split_value, best_nodes, best_gini_impurity
 
@@ -122,8 +122,8 @@ def fit_decision_tree(X=None, Y=None, max_depth=None, min_sample_per_node=None):
         print('Error! Dimension mismatch between X and Y in fit_decision tree')
         quit()
 
+    max_node_id = 0
     root_node = {'node_id': 0, 'X': X, 'Y': Y, 'terminal': False, 'depth': 0}
-    max_node_id += 1
     attempt_split(root_node, max_depth=max_depth, min_sample_per_node=min_sample_per_node)
 
     return [root_node]
@@ -166,8 +166,76 @@ def attempt_split(node=None, max_depth=None, min_sample_per_node=None):
     # print('At end of attempt node is now {}'.format(node))
 
 
-def predict(tree=None, X=None):
+def print_node(node=None, X_feature_names=None, parent='is_root'):
+
+    has_children = ('children' in node.keys())
+
+    if has_children:
+        children_node_ids = [child['node_id'] for child in node['children']]
+        feature = X_feature_names[node['split_feature']]
+        string = 'node_id={}, depth={}, terminal={}, parent={}, children={}, split on {}={}, values={}'.format(node['node_id'], node['depth'], node['terminal'], parent, children_node_ids, feature, node['split_value'], node['Y'])
+    else:
+        string = 'node_id={}, depth={}, terminal={}, parent={}, values={}'.format(node['node_id'], node['depth'], node['terminal'], parent, node['Y'])
+
+    print(string)
+
+    if has_children:
+        for child in node['children']:
+            print_node(node=child, X_feature_names=X_feature_names, parent=node['node_id'])
+
+
+def print_tree(tree=None, X_feature_names=None):
+
+    print('Tree:')
+    for node in tree:
+        print_node(node, X_feature_names)
+
+
+def predict_all(tree=None, X=None):
+    '''use tree to get predicted Y_i for each sample X_i'''
+
+    # TODOO vectorize
+    Y = []
+    root_node = tree[0]
+    print('Predictions:')
+    for sample in X:
+        Y.append(predict(root_node, sample))
+        print(sample, predict(root_node, sample))
+
     return Y
+
+
+def get_next_node(node=None, Xi=None):
+    '''decide which child node to go to next based on contents of Xi
+    left node: < split value
+    right node: >= split value'''
+
+    index = node['split_feature']
+
+    if Xi[index] < node['split_value']:  # check if <= TODOO
+        child_index = 0
+    else:
+        child_index = 1
+
+    return node['children'][child_index]
+
+
+def predict(node=None, Xi=None):
+    '''travel through tree'''
+
+    if node['terminal']:
+        return terminal_predict(node)
+    else:
+        next_node = get_next_node(node, Xi)
+        return predict(next_node, Xi)
+
+
+def terminal_predict(node):
+    '''return most frequent class in a node
+    if there's a tie, take first value'''
+
+    classes, counts = np.unique(node['Y'], return_counts=True)
+    return classes[np.argmax(counts)]
 
 
 def calculate_accuracy_score(Y_predict=None, Y_ref=None):
@@ -185,10 +253,13 @@ X, Y, X_feature_names = get_data(filename=filename, target=target)
 # X_train, Y_train, X_test, Y_test = split_train_test(X, Y, test_fraction=test_fraction)
 X_train = X
 Y_train = Y
+X_test = X
+Y_test = Y
 
 tree = fit_decision_tree(X=X_train, Y=Y_train, max_depth=max_depth, min_sample_per_node=min_sample_per_node)
-print(tree)
 
-Y_predict = predict(tree=tree, X=X_test)
+print_tree(tree=tree, X_feature_names=X_feature_names)
+
+Y_predict = predict_all(tree=tree, X=X_test)
 
 score = calculate_accuracy_score(Y_predict=Y_predict, Y_ref=Y_test)
