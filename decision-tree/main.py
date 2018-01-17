@@ -70,7 +70,7 @@ def calc_gini_impurity_nodes(nodes=None):
 
 
 def information_gain():
-    return
+    return 0
 
 
 def make_binary_split(i_feature=None, split_value=None, X=None, Y=None):
@@ -91,10 +91,10 @@ def make_binary_split(i_feature=None, split_value=None, X=None, Y=None):
     return [{'node_id': 0, 'X': X_left, 'Y': Y_left}, {'node_id': 1, 'X': X_right, 'Y': Y_right}]
 
 
-def get_best_split(X=None, Y=None):
+def get_best_split(X=None, Y=None, criterion='gini'):
     '''for a given dataset X and Y, find the best feature and feature-value to split on'''
     n_features = X.shape[1]
-    best_gini_impurity = 1000
+    best_criterion_val = 1000
     for i_feature in range(n_features):
         # get all unique values this feature takes in the data
         unique_values = set(X[:, i_feature])
@@ -102,18 +102,22 @@ def get_best_split(X=None, Y=None):
         for split_value in unique_values:
             # print('Testing split on value {} of feature {}'.format(split_value, i_feature))
             nodes = make_binary_split(i_feature, split_value, X, Y)
-            gini_impurity = calc_gini_impurity_nodes(nodes)
-            if gini_impurity < best_gini_impurity:
+            if criterion == 'gini':
+                criterion_val = calc_gini_impurity_nodes(nodes)
+            else:
+                print('Unknown value {} for criterion'.format(criterion))
+                quit()
+            if criterion_val < best_criterion_val:
                 best_feature = i_feature
                 best_split_value = split_value
-                best_gini_impurity = gini_impurity
+                best_criterion_val = criterion_val
                 best_nodes = nodes
     # print('Choosing to split on feature {} and value {} into nodes {}. Gini impurity is {}'.format(best_feature, best_split_value, best_nodes, best_gini_impurity))
 
-    return best_feature, best_split_value, best_nodes, best_gini_impurity
+    return best_feature, best_split_value, best_nodes, best_criterion_val
 
 
-def fit_decision_tree(X=None, Y=None, max_depth=None, min_sample_per_node=None):
+def fit_decision_tree(X=None, Y=None, max_depth=None, min_sample_per_node=None, criterion=None):
     '''input'''
 
     global max_node_id
@@ -124,12 +128,12 @@ def fit_decision_tree(X=None, Y=None, max_depth=None, min_sample_per_node=None):
 
     max_node_id = 0
     root_node = {'node_id': 0, 'X': X, 'Y': Y, 'terminal': False, 'depth': 0}
-    attempt_split(root_node, max_depth=max_depth, min_sample_per_node=min_sample_per_node)
+    attempt_split(root_node, max_depth=max_depth, min_sample_per_node=min_sample_per_node, criterion=criterion)
 
     return [root_node]
 
 
-def attempt_split(node=None, max_depth=None, min_sample_per_node=None):
+def attempt_split(node=None, max_depth=None, min_sample_per_node=None, criterion=None):
     '''check if node should be split, based on hyperparameters'''
 
     global max_node_id
@@ -144,10 +148,10 @@ def attempt_split(node=None, max_depth=None, min_sample_per_node=None):
         node['terminal'] = True
 
     if not node['terminal']:
-        best_feature, best_split_value, best_nodes, best_gini_impurity = get_best_split(X=node['X'], Y=node['Y'])
+        best_feature, best_split_value, best_nodes, best_criterion_val = get_best_split(X=node['X'], Y=node['Y'], criterion=criterion)
         node['split_feature'] = best_feature
         node['split_value'] = best_split_value
-        node['gini_impurity'] = best_gini_impurity
+        node['criterion_val'] = best_criterion_val
         # print('Parent node is now {}'.format(node))
 
         for child_node in best_nodes:
@@ -159,7 +163,7 @@ def attempt_split(node=None, max_depth=None, min_sample_per_node=None):
 
             # print('attempting split in child node {}'.format(child_node))
 
-            attempt_split(child_node, max_depth=max_depth, min_sample_per_node=min_sample_per_node)
+            attempt_split(child_node, max_depth=max_depth, min_sample_per_node=min_sample_per_node, criterion=criterion)
 
         node['children'] = best_nodes
 
@@ -278,6 +282,7 @@ target = 'hospitalised'
 test_fraction = 0.25
 max_depth = 2
 min_sample_per_node = 2
+criterion = 'gini'
 
 X, Y, X_feature_names = get_data(filename=filename, target=target)
 
@@ -287,7 +292,7 @@ Y_train = Y
 X_test = X
 Y_test = Y
 
-tree = fit_decision_tree(X=X_train, Y=Y_train, max_depth=max_depth, min_sample_per_node=min_sample_per_node)
+tree = fit_decision_tree(X=X_train, Y=Y_train, max_depth=max_depth, min_sample_per_node=min_sample_per_node, criterion=criterion)
 
 print_tree(tree=tree, X_feature_names=X_feature_names)
 
