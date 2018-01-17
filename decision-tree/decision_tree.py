@@ -103,7 +103,7 @@ def get_best_split(X=None, Y=None, criterion='gini'):
 
 
 def fit_decision_tree(X=None, Y=None, max_depth=None, min_sample_per_node=None, criterion=None):
-    '''input'''
+    '''for a given dataset and hyperparameters, build a decision tree'''
 
     global max_node_id
 
@@ -238,6 +238,7 @@ def terminal_predict_classification(node=None):
 
 
 def terminal_predict_regression(node=None):
+    '''return mean of predictions in a node'''
 
     return node['Y'].mean()
 
