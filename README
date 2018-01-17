@@ -2,6 +2,8 @@
 
 ------------------------------------------------
 
+** naive-bayes-classifier **
+
 Naive Bayes classifier for unlabelled ebook files
 
 * reads labelled datafiles
@@ -13,12 +15,17 @@ Naive Bayes classifier for unlabelled ebook files
 
 Usage:
 
-python classify-skl.py #uses scikit-learn
-python classify-scratch.py #Naive Bayes from scratch
+python classify-skl.py # uses scikit-learn
+python classify-scratch.py # Naive Bayes from scratch
 
 control variables (vocabulary size, train/test split fraction, flags for Laplacian correction, uniform prior, etc.) all hard-coded in .py files
 
 ------------------------------------------------
 
-Decision tree
+** decision-tree **
 
+Decision tree without scikit-learn
+
+* regression tree (main-regression.py) or classification tree (main-classification.py)
+
+------------------------------------------------
