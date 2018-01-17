@@ -4,24 +4,6 @@ import pandas as pd
 max_node_id = 0  # global variable for tracking id of all nodes created
 
 
-def get_data(filename, target):
-    '''target: header of column containing target variable
-
-    Loads data from csv file and returns matrix X (features),
-    vector Y (target),
-    and the column headers (feature names) for matrix X
-    '''
-    df = pd.read_csv(filename)
-    X = df.drop(target, axis=1).values
-    Y = df[target].values
-    cols = df.columns.values
-    X_feature_names = cols[cols != target]
-    print("Predicting target '{}' from features {}".format(target, X_feature_names))
-    print('Features array X has shape {}, target vector Y has length {}'.format(X.shape, Y.size))
-
-    return X, Y, X_feature_names
-
-
 def calc_gini_impurity(Y=None):
     '''calculate gini impurity of a list of elements (measure
     of how often a randomly
@@ -48,24 +30,32 @@ def calc_gini_impurity(Y=None):
     return gini_imp_node, n_samples
 
 
-def calc_gini_impurity_nodes(nodes=None):
-    '''calc weighted gini impurity of set of nodes.
+def calc_criterion_nodes(nodes=None, criterion='gini'):
+    '''calc weighted criterion (such as gini impurity
+    or SSE) of set of nodes.
     Nodes should be list of dict of datasets e.g.
     [{'node_id': 0, 'X': X_0, 'Y': Y_0}, {'node_id': 1, 'X': X_1, 'Y': Y_1}]'''
-    gini_impurity = 0.0
+    criterion_val = 0.0
     n_total_samples = 0.0
 
     for node in nodes:
         Y = node['Y']
-        gini_imp_node, n_samples = calc_gini_impurity(Y)
+        if criterion == 'gini':
+            criterion_val_node, n_samples = calc_gini_impurity(Y)
+        elif criterion == 'sse':
+            criterion_val_node, n_samples = Y.var(), float(len(Y))
+        else:
+            print('Unknown value {} for criterion'.format(criterion))
+            quit()
+
         # weight by number of samples in this node
-        gini_impurity += gini_imp_node * n_samples
+        criterion_val += criterion_val_node * n_samples
         n_total_samples += n_samples
 
     # normalise weights
-    gini_impurity /= n_total_samples
+    criterion_val /= n_total_samples
 
-    return gini_impurity
+    return criterion_val
 
 
 def information_gain():
@@ -101,11 +91,7 @@ def get_best_split(X=None, Y=None, criterion='gini'):
         for split_value in unique_values:
             # print('Testing split on value {} of feature {}'.format(split_value, i_feature))
             nodes = make_binary_split(i_feature, split_value, X, Y)
-            if criterion == 'gini':
-                criterion_val = calc_gini_impurity_nodes(nodes)
-            else:
-                print('Unknown value {} for criterion'.format(criterion))
-                quit()
+            criterion_val = calc_criterion_nodes(nodes, criterion)
             if criterion_val < best_criterion_val:
                 best_feature = i_feature
                 best_split_value = split_value
@@ -189,21 +175,24 @@ def print_node(node=None, X_feature_names=None, parent='is_root'):
 
 def print_tree(tree=None, X_feature_names=None):
 
+    print()
     print('Tree:')
     for node in tree:
         print_node(node, X_feature_names)
 
 
-def predict_all(tree=None, X=None):
-    '''use tree to get predicted Y_i for each sample X_i'''
+def predict_all(tree=None, X=None, prediction_type='classification'):
+    '''use tree to get predicted Y_i for each sample X_i
+    possible values of prediction_type are: regression, classification'''
+
+    print()
+    print('Predictions:')
 
     # TODOO vectorize
     Y = []
     root_node = tree[0]
-    print('Predictions:')
     for sample in X:
-        Y.append(predict(root_node, sample))
-        print(sample, predict(root_node, sample))
+        Y.append(predict(root_node, sample, prediction_type))
     Y = np.asarray(Y)
 
     return Y
@@ -224,22 +213,33 @@ def get_next_node(node=None, Xi=None):
     return node['children'][child_index]
 
 
-def predict(node=None, Xi=None):
+def predict(node=None, Xi=None, prediction_type=None):
     '''travel through tree'''
 
     if node['terminal']:
-        return terminal_predict(node)
+        if prediction_type == 'classification':
+            return terminal_predict_classification(node)
+        elif prediction_type == 'regression':
+            return terminal_predict_regression(node)
+        else:
+            print('Unknown prediction type ', prediction_type)
+            quit()
     else:
         next_node = get_next_node(node, Xi)
-        return predict(next_node, Xi)
+        return predict(next_node, Xi, prediction_type)
 
 
-def terminal_predict(node):
+def terminal_predict_classification(node=None):
     '''return most frequent class in a node
     if there's a tie, take first value'''
 
     classes, counts = np.unique(node['Y'], return_counts=True)
     return classes[np.argmax(counts)]
+
+
+def terminal_predict_regression(node=None):
+
+    return node['Y'].mean()
 
 
 def calculate_scores(Y_predict=None, Y_ref=None):
