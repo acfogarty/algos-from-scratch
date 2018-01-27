@@ -3,10 +3,12 @@ sys.path.append('../common-functions')
 import distances
 import numpy as np
 import copy
+import matplotlib.pyplot as plt
 
 # hierarchical agglomerative clustering
 # metric = Euclidean distance
-# linkage criteria = single-linkage
+# linkage criterion = single-linkage
+# TODO: Ward's criterion as linkage criterion; choose stopping criterion
 
 
 def main():
@@ -34,7 +36,11 @@ def main():
     
     # print values in final clusters
     for cluster in clusters:
-        print([target_data[i] for i in cluster])
+        data = np.asarray([target_data[i] for i in cluster]).flatten()
+        print('cluster:', data)
+        plt.scatter(data, np.zeros(len(data)))
+
+    plt.show()
 
 
 def agglomerate_clusters(clusters, sample_distance_matrix):
