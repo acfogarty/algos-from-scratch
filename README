@@ -1,4 +1,18 @@
+Various ML algorithms from scratch (using numpy only, no scipy, no scikit-learn)
 
+------------------------------------------------
+
+** decision-tree **
+
+Decision tree without scikit-learn
+
+* regression tree (main-regression.py) or classification tree (main-classification.py)
+
+------------------------------------------------
+
+** hac (hierarchical agglomerative clustering) **
+
+with metric = Euclidean distance and linkage criteria = single-linkage
 
 ------------------------------------------------
 
@@ -15,17 +29,8 @@ Naive Bayes classifier for unlabelled ebook files
 
 Usage:
 
-python classify-skl.py # uses scikit-learn
+python classify-skl.py # uses scikit-learn for comparison
 python classify-scratch.py # Naive Bayes from scratch
 
-control variables (vocabulary size, train/test split fraction, flags for Laplacian correction, uniform prior, etc.) all hard-coded in .py files
+control variables (vocabulary size, train/test split fraction, flags for Laplacian correction, uniform prior, etc.) all hard-coded
 
-------------------------------------------------
-
-** decision-tree **
-
-Decision tree without scikit-learn
-
-* regression tree (main-regression.py) or classification tree (main-classification.py)
-
-------------------------------------------------
