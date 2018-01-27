@@ -8,7 +8,7 @@ def euclidean_distance_squared(x1, x2):
     return np.sum((x1 - x2)**2)
 
 
-def set_distance(set1, set2, distance_matrix, criterion='single-linkage'):
+def distance_between_sets(set1, set2, distance_matrix, criterion='single-linkage'):
     '''Returns distance between two sets of points
     with linkage criterion: single-linkage (min of pairwise distances)
     input:
