@@ -69,3 +69,27 @@ def tanh(x):
 def softmax(x):
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum(axis=0)
+
+
+def cross_entropy_loss(Y_true, Y_predict):
+    '''
+    Returns mean cross entropy error over all samples
+    input: np.arrays with dimensions n_samples * n_classes
+    Y_true contains 1 and 0
+    Y_predict contains probabilities
+    Doesn't include error handling for zeroes in Y_predict
+
+    L(y, yhat) = -(1/N) * sum_N( sum_C( y*log(yhat) ) )
+    N: n_samples
+    C: n_classes
+    '''
+    n_samples = Y_true.shape[1]
+
+    # Y_true contains 1 and 0, so we use it as index
+    mask = (Y_true == 1)  # TODOO check Y_true is in correct format with one 1 per line
+    loss_per_sample = np.log(Y_predict[mask])
+
+    loss = np.sum(loss_per_sample) / float(n_samples) * -1
+    print(loss)
+
+    return loss
