@@ -40,3 +40,32 @@ def get_data(filename, target):
     print('Features array X has shape {}, target vector Y has length {}'.format(X.shape, Y.size))
 
     return X, Y, X_feature_names
+
+
+def one_hot_encoder(Y):
+    '''
+    only works if Y contains integers
+    assumes all integers between 0 and Y.max() are present in Y
+
+    input: 1D np.array of length n_samples
+    returns:
+        np.array with dimensions n_samples * n_classes
+    '''
+
+    # n_classes = len(classes)
+    n_classes = Y.max() + 1
+    n_samples = Y.size
+
+    Y_encoded = np.zeros((n_samples, n_classes))
+    Y_encoded[np.arange(n_samples), Y] = 1
+
+    return Y_encoded
+
+
+def tanh(x):
+    return np.tanh(x)
+
+
+def softmax(x):
+    e_x = np.exp(x - np.max(x))
+    return e_x / e_x.sum(axis=0)
