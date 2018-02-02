@@ -45,7 +45,7 @@ class neural_network:
     def predict(self, X):
         '''
         X: np.array with dimensions n_samples * n_features
-        returns: np.array with dimensions n_samples * n_classes XXXX'''
+        returns: np.array with dimensions n_samples * n_classes'''
         A = X.transpose()
 
         for W in self.weights[:-1]:
@@ -58,6 +58,8 @@ class neural_network:
         bias = np.ones((1, A.shape[1]))
         A = np.vstack((bias, A))
         Y = self.forward_propogate_layer(A, self.weights[-1], self.output_activation_fn)
+
+        Y = Y.transpose()
 
         return Y
 

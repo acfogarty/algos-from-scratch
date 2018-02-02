@@ -67,8 +67,14 @@ def tanh(x):
 
 
 def softmax(x):
-    e_x = np.exp(x - np.max(x))
-    return e_x / e_x.sum(axis=0)
+    '''
+    Returns softmax for each row in input array
+    input: np.array with dimensions n_nodes * n_samples
+    '''
+    
+    e_x = np.exp(x)  # - np.max(x))
+    e_sum = e_x.sum(axis=0)
+    return e_x / e_sum.reshape(1, len(e_sum))
 
 
 def cross_entropy_loss(Y_true, Y_predict):

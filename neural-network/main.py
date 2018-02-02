@@ -19,7 +19,7 @@ alpha = 0.1  # learning rate
 
 # load dataset
 X, Y, X_feature_names = common_fns.get_data(filename=filename, target=target)
-X = X[:,[0,1]] # XXXX 2 features
+#X = X[:,[0,1]] # XXXX 2 features
 
 # encode Y
 Y = common_fns.one_hot_encoder(Y)
@@ -42,5 +42,5 @@ nn.initialize_weights()
 # fit network on train set
 
 # make predictions on test set
-Y_predict = nn.predict(X[:3])
-print(X[:3], Y_predict)
+Y_predict = nn.predict(X)
+print(X, Y_predict)
