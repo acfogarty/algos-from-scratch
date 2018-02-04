@@ -72,7 +72,7 @@ def softmax(x):
     input: np.array with dimensions n_nodes * n_samples
     '''
     
-    e_x = np.exp(x)  # - np.max(x))
+    e_x = np.exp(x - np.max(x))  # subtract this constant for numerical stability
     e_sum = e_x.sum(axis=0)
     return e_x / e_sum.reshape(1, len(e_sum))
 
@@ -96,6 +96,63 @@ def cross_entropy_loss(Y_true, Y_predict):
     loss_per_sample = np.log(Y_predict[mask])
 
     loss = np.sum(loss_per_sample) / float(n_samples) * -1
-    print(loss)
 
     return loss
+
+
+def cross_entropy_loss_gradient_wrt_yhat(Y_true, Y_predict):
+    '''dL/dyhat = y/yhat'''
+
+    return Y_true / Y_predict * -1.0
+
+
+def cross_entropy_loss_gradient_wrt_z(Y_true, Y_predict):
+    '''dL/dyhat = y/yhat'''
+
+    return Y_predict - Y_true
+
+
+def cross_entropy_loss_gradient_wrt_W(Y_true, Y_predict, X):
+    '''dL/dW_ij = x_j(yhat_i - y_i)
+    i is over n_classes
+    j is over n_nodes
+    L(Y_true, Y_predict) = cross entropy
+    Y_predict = softmax(Z)
+    Z = WX
+    input dimensions:
+        Y_true, Y_predict: n_classes * n_examples
+        X: n_nodes * n_examples
+    local variable dimensions:
+        Z: n_classes * n_examples
+        W: n_classes * n_nodes 
+    output dimensions:
+        dW: n_classes * n_nodes
+    '''
+
+    return np.dot((Y_predict - Y_true), X.transpose())
+
+
+def cross_entropy_loss_per_sample(Y_true, Y_predict):
+    '''
+    Returns cross entropy error for each sample
+    input: np.arrays with dimensions n_samples * n_classes
+    Y_true contains 1 and 0
+    Y_predict contains probabilities
+    Doesn't include error handling for zeroes in Y_predict
+
+    L(y, yhat) = -( sum_C( y*log(yhat) ) )
+    N: n_samples
+    C: n_classes
+    '''
+    n_samples = Y_true.shape[1]
+    
+    # transpose so that mask indexing works
+    Y_true = Y_true.transpose()
+    Y_predict = Y_predict.transpose()
+
+    # Y_true contains 1 and 0, so we use it as index
+    mask = (Y_true == 1)  # TODOO check Y_true is in correct format with one 1 per line
+    loss_per_sample = np.log(Y_predict[mask])
+    loss_per_sample *= -1
+
+    return loss_per_sample
