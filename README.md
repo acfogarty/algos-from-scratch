@@ -2,23 +2,33 @@ Various ML algorithms from scratch (using numpy only, no scipy, no scikit-learn)
 
 ------------------------------------------------
 
-** decision-tree **
+# deep feed-forward neural network
 
-Decision tree without scikit-learn
+sub-directory: `neural-network`
 
-* regression tree (main-regression.py) or classification tree (main-classification.py)
+softmax output layer for classification
 
 ------------------------------------------------
 
-** hac (hierarchical agglomerative clustering) **
+# decision tree
+
+sub-directory: `decision-tree`
+
+regression tree (main-regression.py) or classification tree (main-classification.py)
+
+------------------------------------------------
+
+# hierarchical agglomerative clustering
+
+sub-directory: `hac`
 
 with metric = Euclidean distance and linkage criteria = single-linkage
 
 ------------------------------------------------
 
-** naive-bayes-classifier **
+# Naive Bayes classifier for unlabelled ebook files
 
-Naive Bayes classifier for unlabelled ebook files
+sub-directory: `naive-bayes-classifier`
 
 * reads labelled datafiles
 * partitions into training and test sets
@@ -29,8 +39,8 @@ Naive Bayes classifier for unlabelled ebook files
 
 Usage:
 
-python classify-skl.py # uses scikit-learn for comparison
-python classify-scratch.py # Naive Bayes from scratch
+python classify-skl.py  # uses scikit-learn for comparison
+python classify-scratch.py  # Naive Bayes from scratch
 
 control variables (vocabulary size, train/test split fraction, flags for Laplacian correction, uniform prior, etc.) all hard-coded
 
