@@ -66,6 +66,12 @@ def tanh(x):
     return np.tanh(x)
 
 
+def tanh_gradient(x):
+    '''TODO used cached value of tanh(x)'''
+    t = np.tanh(x)
+    return 1 - t * t
+
+
 def softmax(x):
     '''
     Returns softmax for each row in input array
@@ -151,8 +157,24 @@ def cross_entropy_loss_per_sample(Y_true, Y_predict):
     Y_predict = Y_predict.transpose()
 
     # Y_true contains 1 and 0, so we use it as index
-    mask = (Y_true == 1)  # TODOO check Y_true is in correct format with one 1 per line
+    mask = (Y_true == 1)  # TODOO assert Y_true is in correct format with one 1 per line
     loss_per_sample = np.log(Y_predict[mask])
     loss_per_sample *= -1
 
     return loss_per_sample
+
+
+def normalize_input_data(X):
+    '''
+    input: np.array with dimensions n_features * n_samples
+    returns:
+        X: normalised np.array with dimensions n_features * n_samples
+        X_mean, X_std: np.array with dimensions n_features
+    '''
+    X = X.astype(np.float64)
+    X_mean = X.mean(axis=0)
+    X_std = X.std(axis=0)
+    X -= X_mean
+    X /= X_std
+
+    return X, X_mean, X_std
