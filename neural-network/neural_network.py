@@ -1,12 +1,28 @@
 import numpy as np
+import copy
 import sys
 sys.path.append('../common-functions')
-from common_fns import tanh, softmax
+import common_fns
+from common_fns import tanh, softmax, tanh_gradient
+
+
+# indexing
+
+# layers are numbered from 0 (input layer), through the hidden layers, to n_layer (output layer)
+# A^{(0)} = X.transpose()
+# Z^{(1)} = W^{(1)} x A^{(0)}
+# A^{(1)} = S(Z^{(1)})
+# Z^{(2)} = W^{(2)} x A^{(1)}
+# A^{(2)} = S(Z^{(2)})
+# ...
+# Z^{(L)} = W^{(L)} x A^{(L-1)}
+# A^{(L)} = softmax(Z^{(L)})
+# Y_hat = A^{(L)}.transpose()
 
 
 class neural_network:
 
-    def __init__(self, n_features, n_classes, n_nodes_per_hidden_layer, activation_fn=None, output_activation_fn=None):
+    def __init__(self, n_features, n_classes, n_nodes_per_hidden_layer, activation_fn=None, activation_fn_gradient=None, output_activation_fn=None):
 
         self.n_features = n_features
         self.n_classes = n_classes
@@ -19,15 +35,23 @@ class neural_network:
 
         if activation_fn is None:
             self.activation_fn = tanh
+            self.activation_fn_gradient = tanh_gradient
         else:
             self.activation_fn = activation_fn
+            self.activation_fn_gradient = activation_fn_gradient
 
         if output_activation_fn is None:
             self.output_activation_fn = softmax
         else:
-            self.output_activation_fn = output_activation_fn
+            print('For now, only the gradient of the softmax output activation fn is implemented')
+            quit()
+            # self.output_activation_fn = output_activation_fn
 
         self.weights = []
+        # node inputs
+        self.a_by_layer = []
+        # node outputs
+        self.z_by_layer = []
 
         print('initialised a neural network with {} classes, {} features'.format(self.n_classes, self.n_features))
         print('and {} layers with nodes per layer: {}'.format(self.n_layers, self.n_nodes_per_layer))
@@ -36,43 +60,105 @@ class neural_network:
         '''a: np.array with dimension n_nodes_prev_layer * n_samples
         W: weights, np.array with dimensions n_nodes * n_nodes_prev_layer
         '''
-        print('a',a)
-        print('W',W)
+        #print('a',a)
+        #print('W',W)
         z = np.dot(W, a)
-        print('z',z)
-        return activation_fn(z)
+        #print('z',z)
+        return z, activation_fn(z)
 
     def predict(self, X):
         '''
         X: np.array with dimensions n_samples * n_features
         returns: np.array with dimensions n_samples * n_classes'''
+
         A = X.transpose()
 
-        for W in self.weights[:-1]:
+        for l in range(self.n_layers - 1):
+
             # add bias node to A (add row of 1s at start of matrix)
+            # same for Z, so that it will have correct dimensions in backprop
             bias = np.ones((1, A.shape[1]))
             A = np.vstack((bias, A))
-            # get node outputs
-            A = self.forward_propogate_layer(A, W, self.activation_fn)
+            if l > 0: 
+                self.a_by_layer[l-1] = copy.deepcopy(A)
 
-        bias = np.ones((1, A.shape[1]))
-        A = np.vstack((bias, A))
-        Y = self.forward_propogate_layer(A, self.weights[-1], self.output_activation_fn)
+            # get activation function
+            if l == (self.n_layers - 2):
+                fn = self.output_activation_fn
+            else:
+                fn = self.activation_fn
 
-        Y = Y.transpose()
+            # move forward one layer
+            W = self.weights[l]
+            Z, A = self.forward_propogate_layer(A, W, fn)
+            self.z_by_layer[l] = copy.deepcopy(Z)
+
+        Y = A
+        # Y = Y.transpose()
+
+        # for l in range(self.n_layers - 1):
+        #     print(l+1, 'a', self.a_by_layer[l].shape)
+        #     print(l+1, 'z', self.z_by_layer[l].shape)
+        #     print(l+1, 'w', self.weights[l].shape)
 
         return Y
 
     def initialize_weights(self):
         # TODOO add different initialisation options
+
         print('Initialising weights with dimensions:')
-        for i in range(self.n_layers-1):
-            # self.n_nodes_per_layer[i] + 1 because of bias term
-            W = np.random.random((self.n_nodes_per_layer[i+1], self.n_nodes_per_layer[i] + 1))
+
+        for i in range(1, self.n_layers):
+
+            # weights
+            # self.n_nodes_per_layer[i-1] + 1 because of bias term
+            W = np.random.random((self.n_nodes_per_layer[i], self.n_nodes_per_layer[i-1] + 1))
             W *= 2.0
             W -= 1.0
             self.weights.append(W)
             print('layer {}: {}'.format(i, W.shape))
-            print(W)
 
+            # inputs and outputs of each layer (not including layer 0, the input layer)
+            place_holder = np.array(0)
+            self.a_by_layer.append(place_holder)
+            self.z_by_layer.append(place_holder)
 
+    def fit(self, X, Y, loss_tolerance=0.0005, alpha=0.05):
+
+        Y = Y.transpose()
+        bias = np.ones((X.shape[0], 1))
+        X_b = np.hstack((bias, X))
+
+        self.initialize_weights()
+        loss_diff = 1000
+        loss_prev = 1000
+        while loss_diff > loss_tolerance:
+
+            # prediction with current value of W
+            Y_hat = self.predict(X)
+
+            # loss for current value of W
+            loss = common_fns.cross_entropy_loss(Y_true=Y, Y_predict=Y_hat)
+            loss_diff = loss_prev - loss
+            loss_prev = loss
+            print('loss in fit', loss, loss_diff)
+
+            # output layer gradient for current value of W
+            dJ_dZ = Y_hat - Y
+            dJ_dW = np.dot(dJ_dZ, self.a_by_layer[-2].transpose())
+            self.weights[-1] -= alpha * dJ_dW
+
+            # other layers
+            # TODO cache tanh activation fn to reuse when calculating gradient
+            #print('W',self.weights[-1].shape)
+            #print('W reduced',self.weights[-1][:,1:].shape)
+            #print('old dJ_dZ', dJ_dZ.shape)
+            temp = np.dot(self.weights[-1][:,1:].transpose(), dJ_dZ)  # exclude first column which was for bias
+            dJ_dZ = temp * self.activation_fn_gradient(self.z_by_layer[-2])  # element-wise multiplication
+            #print('temp', temp.shape)
+            #print('dJ_dZ', dJ_dZ.shape)
+            #print('X', X.shape)
+            dJ_dW = np.dot(dJ_dZ, X_b)  # X is already transposed
+            #print('dJ_dW', dJ_dW.shape)
+            self.weights[-2] -= alpha * dJ_dW
+            

@@ -3,6 +3,7 @@ import neural_network
 import sys
 sys.path.append('../common-functions')
 import common_fns
+import matplotlib.pyplot as plt
 
 # neural network from scratch
 # one hidden layer
@@ -12,24 +13,27 @@ import common_fns
 filename = '../data/test-data-classification-smoking.csv'
 target = 'hospitalised'
 test_fraction = 0.25
-n_nodes_per_hidden_layer = [10, 7]
+n_nodes_per_hidden_layer = [6]
 n_hidden_layers = len(n_nodes_per_hidden_layer)
 lambda_l = 0.1  # regularisation hyperparameter
 alpha = 0.1  # learning rate
 
 # load dataset
 X, Y, X_feature_names = common_fns.get_data(filename=filename, target=target)
-#X = X[:,[0,1]] # XXXX 2 features
+X = X[:,[0, 3]] # XXXX 2 features, numerical only
 
 # encode Y
 Y = common_fns.one_hot_encoder(Y)
+
+# normalise X
+X, _, _ = common_fns.normalize_input_data(X)
 
 # random split into test and train
 X_train, Y_train, X_test, Y_test = common_fns.split_train_test(X, Y, test_fraction=test_fraction)
 
 n_samples = len(Y_train)
 n_features = X.shape[1]
-n_classes = len(np.unique(Y))
+n_classes = len(np.unique(Y_train))
 print('n_samples', n_samples)
 print('n_features', n_features)
 print('input matrix shape', X.shape)
@@ -37,10 +41,19 @@ print('n_classes', n_classes)
 
 # initialise model
 nn = neural_network.neural_network(n_features, n_classes, n_nodes_per_hidden_layer)
-nn.initialize_weights()
 
 # fit network on train set
+nn.fit(X_train, Y_train)
+
+# # plot data (2 features)
+# for c in range(n_classes):
+#     X_plot = X_train[Y_train[:,c] == 1][:,0]
+#     Y_plot = X_train[Y_train[:,c] == 1][:,1]
+#     plt.scatter(X_plot, Y_plot, label='class {}'.format(c))
+# plt.legend()
+# plt.savefig('check.png')
 
 # make predictions on test set
-Y_predict = nn.predict(X)
-print(X, Y_predict)
+Y_predict = nn.predict(X_train)
+print(X_train, Y_predict.transpose())
+print(X_train, Y_train)
