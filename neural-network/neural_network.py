@@ -66,10 +66,12 @@ class neural_network:
         #print('z',z)
         return z, activation_fn(z)
 
-    def predict(self, X):
+    def predict(self, X, transpose_Y=False):
         '''
         X: np.array with dimensions n_samples * n_features
-        returns: np.array with dimensions n_samples * n_classes'''
+        returns: np.array with dimensions n_classes * n_samples
+        if transpose_Y==True, returns n_samples * n_classes
+        '''
 
         A = X.transpose()
 
@@ -79,7 +81,7 @@ class neural_network:
             # same for Z, so that it will have correct dimensions in backprop
             bias = np.ones((1, A.shape[1]))
             A = np.vstack((bias, A))
-            if l > 0: 
+            if l > 0:
                 self.a_by_layer[l-1] = copy.deepcopy(A)
 
             # get activation function
@@ -94,7 +96,8 @@ class neural_network:
             self.z_by_layer[l] = copy.deepcopy(Z)
 
         Y = A
-        # Y = Y.transpose()
+        if transpose_Y:
+            Y = Y.transpose()
 
         # for l in range(self.n_layers - 1):
         #     print(l+1, 'a', self.a_by_layer[l].shape)
@@ -124,14 +127,23 @@ class neural_network:
             self.z_by_layer.append(place_holder)
 
     def fit(self, X, Y, loss_tolerance=0.0005, alpha=0.05):
+        '''backprop and gradient descent to fit self.weights on X and Y
+        inputs:
+            X: np.array with dimensions n_samples * n_features
+            Y: np.array with dimensions n_samples * n_classes
+            loss_tolerance: iterate until old_loss - new_loss < loss_tolerance
+            alpha: learning rate
+        '''
 
         Y = Y.transpose()
         bias = np.ones((X.shape[0], 1))
         X_b = np.hstack((bias, X))
 
         self.initialize_weights()
+
         loss_diff = 1000
         loss_prev = 1000
+
         while loss_diff > loss_tolerance:
 
             # prediction with current value of W
@@ -143,22 +155,20 @@ class neural_network:
             loss_prev = loss
             print('loss in fit', loss, loss_diff)
 
-            # output layer gradient for current value of W
+            # gradient descent
             dJ_dZ = Y_hat - Y
             dJ_dW = np.dot(dJ_dZ, self.a_by_layer[-2].transpose())
             self.weights[-1] -= alpha * dJ_dW
 
-            # other layers
-            # TODO cache tanh activation fn to reuse when calculating gradient
-            #print('W',self.weights[-1].shape)
-            #print('W reduced',self.weights[-1][:,1:].shape)
-            #print('old dJ_dZ', dJ_dZ.shape)
-            temp = np.dot(self.weights[-1][:,1:].transpose(), dJ_dZ)  # exclude first column which was for bias
-            dJ_dZ = temp * self.activation_fn_gradient(self.z_by_layer[-2])  # element-wise multiplication
-            #print('temp', temp.shape)
-            #print('dJ_dZ', dJ_dZ.shape)
-            #print('X', X.shape)
-            dJ_dW = np.dot(dJ_dZ, X_b)  # X is already transposed
-            #print('dJ_dW', dJ_dW.shape)
-            self.weights[-2] -= alpha * dJ_dW
-            
+            # loop backwords through other layers
+            for l in range(-2, -1 * (self.n_layers - 1), -1):
+                # TODO cache tanh activation fn to reuse when calculating gradient
+                temp = np.dot(self.weights[l+1][:,1:].transpose(), dJ_dZ)  # exclude first column of weights matrix, which was for bias
+                dJ_dZ = temp * self.activation_fn_gradient(self.z_by_layer[l])  # element-wise multiplication
+                if l == (-1 * (self.n_layers - 1)):  # input layer
+                    A_T = X_b  # X is already transposed
+                else:  # intermediate layers
+                    A_T = self.a_by_layer[l-1].transpose()
+                dJ_dW = np.dot(dJ_dZ, A_T)
+                self.weights[l] -= alpha * dJ_dW
+

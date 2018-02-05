@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 filename = '../data/test-data-classification-smoking.csv'
 target = 'hospitalised'
 test_fraction = 0.25
-n_nodes_per_hidden_layer = [6]
+n_nodes_per_hidden_layer = [6, 5]
 n_hidden_layers = len(n_nodes_per_hidden_layer)
 lambda_l = 0.1  # regularisation hyperparameter
 alpha = 0.1  # learning rate
