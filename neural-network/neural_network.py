@@ -126,13 +126,15 @@ class neural_network:
             self.a_by_layer.append(place_holder)
             self.z_by_layer.append(place_holder)
 
-    def fit(self, X, Y, loss_tolerance=0.0005, alpha=0.05):
+    def fit(self, X, Y, loss_tolerance=0.0005, alpha=0.05, lambda_regul=0.0):
         '''backprop and gradient descent to fit self.weights on X and Y
+        loss = -1 / n_samples * sum (y*log(y_hat)) + lambda / (2 * n_samples) * sum (w^2)
         inputs:
             X: np.array with dimensions n_samples * n_features
             Y: np.array with dimensions n_samples * n_classes
             loss_tolerance: iterate until old_loss - new_loss < loss_tolerance
             alpha: learning rate
+            lambda_regul: regularisation parameter lambda
         '''
 
         Y = Y.transpose()
@@ -143,6 +145,10 @@ class neural_network:
 
         loss_diff = 1000
         loss_prev = 1000
+
+        # get factor to rescale weights by for regularisation
+        n_samples = X.shape[0]
+        regul_rescale_factor = (1.0 - alpha * lambda_regul / n_samples)
 
         while loss_diff > loss_tolerance:
 
@@ -156,8 +162,10 @@ class neural_network:
             print('loss in fit', loss, loss_diff)
 
             # gradient descent
+            # output layer
             dJ_dZ = Y_hat - Y
             dJ_dW = np.dot(dJ_dZ, self.a_by_layer[-2].transpose())
+            self.weights[-1][:,1:] *= regul_rescale_factor  # don't regularize first column (bias weights)
             self.weights[-1] -= alpha * dJ_dW
 
             # loop backwords through other layers
@@ -170,5 +178,6 @@ class neural_network:
                 else:  # intermediate layers
                     A_T = self.a_by_layer[l-1].transpose()
                 dJ_dW = np.dot(dJ_dZ, A_T)
+                self.weights[l][:,1:] *= regul_rescale_factor  # don't regularize first column (bias weights)
                 self.weights[l] -= alpha * dJ_dW
 
