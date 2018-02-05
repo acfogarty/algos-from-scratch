@@ -95,7 +95,7 @@ def cross_entropy_loss(Y_true, Y_predict):
     N: n_samples
     C: n_classes
     '''
-    n_samples = Y_true.shape[1]
+    n_samples = Y_true.shape[0]
 
     # Y_true contains 1 and 0, so we use it as index
     mask = (Y_true == 1)  # TODOO check Y_true is in correct format with one 1 per line
