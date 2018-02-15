@@ -4,7 +4,7 @@ Various ML algorithms from scratch (using numpy only, no scipy, no scikit-learn)
 
 # deep feed-forward neural network
 
-sub-directory: `neural-network`
+sub-directory: `neural_network`
 
 softmax output layer for classification, L2 regularization
 
@@ -12,9 +12,9 @@ softmax output layer for classification, L2 regularization
 
 # decision tree
 
-sub-directory: `decision-tree`
+sub-directory: `decision_tree`
 
-regression tree (main-regression.py) or classification tree (main-classification.py)
+regression tree (main_regression.py) or classification tree (main_classification.py)
 
 ------------------------------------------------
 
@@ -28,7 +28,7 @@ with metric = Euclidean distance and linkage criteria = single-linkage
 
 # Naive Bayes classifier for unlabelled ebook files
 
-sub-directory: `naive-bayes-classifier`
+sub-directory: `naive_bayes_classifier`
 
 * reads labelled datafiles
 * partitions into training and test sets
@@ -39,8 +39,8 @@ sub-directory: `naive-bayes-classifier`
 
 Usage:
 
-python classify-skl.py  # uses scikit-learn for comparison
-python classify-scratch.py  # Naive Bayes from scratch
+python classify_skl.py  # uses scikit-learn for comparison
+python classify_scratch.py  # Naive Bayes from scratch
 
 control variables (vocabulary size, train/test split fraction, flags for Laplacian correction, uniform prior, etc.) all hard-coded
 
