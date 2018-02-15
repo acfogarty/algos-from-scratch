@@ -6,7 +6,7 @@ Various ML algorithms from scratch (using numpy only, no scipy, no scikit-learn)
 
 sub-directory: `neural-network`
 
-softmax output layer for classification
+softmax output layer for classification, L2 regularization
 
 ------------------------------------------------
 
