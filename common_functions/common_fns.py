@@ -14,10 +14,10 @@ def split_train_test(X, Y, test_fraction=0.2):
     X_shuffled, Y_shuffled = X[p], Y[p]
 
     # split into test set (test_fraction of data) and test set (1 - test_fraction of data)
-    X_test = X[:n_samples_test]
-    Y_test = Y[:n_samples_test]
-    X_train = X[n_samples_test:]
-    Y_train = Y[n_samples_test:]
+    X_test = X_shuffled[:n_samples_test]
+    Y_test = Y_shuffled[:n_samples_test]
+    X_train = X_shuffled[n_samples_test:]
+    Y_train = Y_shuffled[n_samples_test:]
 
     print('Split sample data into training set of size ', len(Y_train), ' and test set of size ', len(Y_test))
 

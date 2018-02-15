@@ -56,7 +56,7 @@ class LabelEncoder():
             np.array of integers of length n_samples
         '''
 
-        Y_encoded = [self.label_to_int[y_i] for y_i in Y]
+        Y_encoded = np.asarray([self.label_to_int[y_i] for y_i in Y])
 
         return Y_encoded
 
