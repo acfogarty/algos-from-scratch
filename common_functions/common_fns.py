@@ -178,3 +178,64 @@ def normalize_input_data(X):
     X /= X_std
 
     return X, X_mean, X_std
+
+
+def hardmax(Y):
+    '''
+    input:
+        array of floats of dimension n_samples*n_classes containing class probabilities
+    return:
+        array of integers of dimension n_samples*n_classes with 1 for the class
+        with max probability and 0 for all others
+    '''
+
+    axis = 1
+    return np.apply_along_axis(lambda x: np.where(x == x.max(), 1, 0), axis, Y)
+
+
+def accuracy_onehot(Y, Y_true):
+    '''
+    calculate accuracy = (true positives + true negatives) / (total population)
+    for two one-hot-encoded arrays
+    input:
+        Y, Y_true: array of dimension n_samples*n_classes containing integers 1, 0 (one-hot-encoding)
+    output: float
+    '''
+    if Y.shape != Y_true.shape:
+        raise Exception('in accuracy Y shape = {} and Y_true shape = {}'.format(Y.shape, Y_true.shape))
+
+    n_samples = Y.shape[0]
+    axis = 1
+    matches = np.apply_along_axis(np.all, axis, (Y == Y_true))
+    n_matches = matches.sum()
+
+    return float(n_matches) / float(n_samples)
+
+
+def confusion_matrix(Y, Y_true, print_matrix=False):
+    '''calculate confusion matrix for two label-encoded arrays
+    assumes classes are integers starting from 0
+    actual class: columns
+    predicted class: rows
+    input:
+        Y, Y_true: array of length n_samples with classes encoded as integers
+    output:
+        array of dimension n_classes * n_classes
+    '''
+    n_classes = max(np.max(Y), np.max(Y_true)) + 1
+
+    matrix = np.zeros((n_classes, n_classes))
+
+    for y_i, y_true_i in zip(Y, Y_true):
+        matrix[y_i][y_true_i] += 1
+
+    if print_matrix:
+        string_format = '{:5d}'
+        classes = range(n_classes)
+        print('         actual classes')
+        print('      ' + ''.join([string_format.format(c) for c in classes]))
+        print('      ' + ''.join(['-----' for c in classes]))
+        for c in classes:
+            print(string_format.format(c) + '|' + ''.join([string_format.format(int(i)) for i in matrix[c]]))
+
+    return matrix
