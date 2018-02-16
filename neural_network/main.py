@@ -1,12 +1,12 @@
 import numpy as np
 import neural_network
 import sys
-sys.path.append('../common-functions')
+sys.path.append('../common_functions')
 import common_fns
 import matplotlib.pyplot as plt
 
 # neural network from scratch
-# one hidden layer
+# multiple hidden layers
 # activation function: tanh
 # loss function: cross-entropy loss
 
@@ -40,7 +40,7 @@ print('input matrix shape', X.shape)
 print('n_classes', n_classes)
 
 # initialise model
-nn = neural_network.neural_network(n_features, n_classes, n_nodes_per_hidden_layer)
+nn = neural_network.NeuralNetwork(n_features, n_classes, n_nodes_per_hidden_layer)
 
 # fit network on train set
 nn.fit(X_train, Y_train, alpha=alpha, lambda_regul=lambda_regul)

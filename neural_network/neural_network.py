@@ -1,7 +1,7 @@
 import numpy as np
 import copy
 import sys
-sys.path.append('../common-functions')
+sys.path.append('../common_functions')
 import common_fns
 from common_fns import tanh, softmax, tanh_gradient
 
@@ -20,7 +20,7 @@ from common_fns import tanh, softmax, tanh_gradient
 # Y_hat = A^{(L)}.transpose()
 
 
-class neural_network:
+class NeuralNetwork:
 
     def __init__(self, n_features, n_classes, n_nodes_per_hidden_layer, activation_fn=None, activation_fn_gradient=None, output_activation_fn=None):
 
