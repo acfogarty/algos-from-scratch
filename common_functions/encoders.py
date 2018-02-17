@@ -41,6 +41,18 @@ class OneHotEncoder():
         return Y_encoded
 
 
+    def decode(self, Y):
+        '''
+        assumes classes were labelled with integers from 0 to nclasses-1
+        input: 
+            np.array with dimensions n_samples * n_classes
+        returns:
+            1D np.array of integers of length n_samples
+        '''
+        axis = 1
+        return np.apply_along_axis(np.argmax, axis, Y)
+
+
 class LabelEncoder():
     '''maps e.g. ['France', 'Germany', 'Belgium', 'France'] to [0, 1, 2, 0]'''
 
@@ -74,8 +86,26 @@ class LabelEncoder():
         classes = np.unique(Y)
         self.nclasses = len(classes)
         self.label_to_int = dict(zip(classes, range(self.nclasses)))
+        self.int_to_label = dict(zip(range(self.nclasses), classes))
 
         Y_encoded = self.transform(Y)
 
         return Y_encoded
 
+
+    def decode(self, Y):
+        '''
+        input:
+            np.array of integers of length n_samples
+        returns:
+            list of strings of length n_samples
+        '''
+
+        Y_decoded = [self.int_to_label[i] for i in Y]
+
+        return Y_decoded
+
+
+    def print_decoder(self):
+
+        print(self.int_to_label)

@@ -215,27 +215,52 @@ def accuracy_onehot(Y, Y_true):
 def confusion_matrix(Y, Y_true, print_matrix=False):
     '''calculate confusion matrix for two label-encoded arrays
     assumes classes are integers starting from 0
-    actual class: columns
-    predicted class: rows
+    actual class: rows
+    predicted class: columns
     input:
         Y, Y_true: array of length n_samples with classes encoded as integers
     output:
         array of dimension n_classes * n_classes
     '''
+    Y = Y.astype(np.int64)
+    Y_true = Y_true.astype(np.int64)
+
     n_classes = max(np.max(Y), np.max(Y_true)) + 1
 
     matrix = np.zeros((n_classes, n_classes))
 
     for y_i, y_true_i in zip(Y, Y_true):
-        matrix[y_i][y_true_i] += 1
+        matrix[y_true_i][y_i] += 1
 
     if print_matrix:
         string_format = '{:5d}'
         classes = range(n_classes)
-        print('         actual classes')
+        print('       predicted classes')
         print('      ' + ''.join([string_format.format(c) for c in classes]))
         print('      ' + ''.join(['-----' for c in classes]))
         for c in classes:
             print(string_format.format(c) + '|' + ''.join([string_format.format(int(i)) for i in matrix[c]]))
 
     return matrix
+
+
+def calculate_scores_from_confusion_matrix(matrix):
+    '''
+    calculate accuracy from multiclass confusion matrix 
+    input:
+        array of dimension n_classes * n_classes with actual class: rows, predicted class: columns
+    output:
+        accuracy (float), precision and recall (arrays of length n_classes)
+    '''
+
+    scores = {}
+    
+    scores['accuracy'] = np.sum(np.diagonal(matrix)) / np.sum(matrix)
+
+    # tp / (tp + fp) sum over columns
+    scores['precision'] = np.diagonal(matrix) / np.sum(matrix, axis=0)
+
+    # recall tp / (tp + fn), sum over rows
+    scores['recall'] = np.diagonal(matrix) / np.sum(matrix, axis=1)
+
+    return scores
