@@ -95,10 +95,17 @@ def cross_entropy_loss(Y_true, Y_predict):
     N: n_samples
     C: n_classes
     '''
+
+    # check matrices are in correct format with one 1 per line
+    for Y in [Y_true, Y_predict]:
+        if not np.all(np.sum(Y_true, axis=1) == 1):
+            print('One of the matrices is not in correct format in cross_entropy_loss')
+            print('Should be n_samples * n_classes')
+            quit()
+
     n_samples = Y_true.shape[0]
 
-    # Y_true contains 1 and 0, so we use it as index
-    mask = (Y_true == 1)  # TODOO check Y_true is in correct format with one 1 per line
+    mask = (Y_true == 1)  
     loss_per_sample = np.log(Y_predict[mask])
 
     loss = np.sum(loss_per_sample) / float(n_samples) * -1

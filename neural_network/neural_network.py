@@ -155,12 +155,6 @@ class NeuralNetwork:
             # prediction with current value of W
             Y_hat = self.predict(X)
 
-            # loss for current value of W
-            loss = common_fns.cross_entropy_loss(Y_true=Y, Y_predict=Y_hat)
-            loss_diff = loss_prev - loss
-            loss_prev = loss
-            print('loss in fit', loss, loss_diff)
-
             # gradient descent
             # output layer
             dJ_dZ = Y_hat - Y
@@ -180,4 +174,10 @@ class NeuralNetwork:
                 dJ_dW = np.dot(dJ_dZ, A_T)
                 self.weights[l][:,1:] *= regul_rescale_factor  # don't regularize first column (bias weights)
                 self.weights[l] -= alpha * dJ_dW
+
+            # loss for current value of W
+            loss = common_fns.cross_entropy_loss(Y_true=Y.transpose(), Y_predict=Y_hat.transpose())
+            loss_diff = loss_prev - loss
+            loss_prev = loss
+            print('loss in fit (without regularisatio)', loss, loss_diff)
 
