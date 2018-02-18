@@ -40,10 +40,10 @@ print('input matrix shape', X.shape)
 print('n_classes', n_classes)
 
 # initialise model
-nn = neural_network.NeuralNetwork(n_features, n_classes, n_nodes_per_hidden_layer)
+nn = neural_network.NeuralNetwork(n_features, n_classes, n_nodes_per_hidden_layer, alpha=alpha, lambda_regul=lambda_regul)
 
 # fit network on train set
-nn.fit(X_train, Y_train, alpha=alpha, lambda_regul=lambda_regul)
+nn.fit(X_train, Y_train)
 
 # # plot data (2 features)
 # for c in range(n_classes):

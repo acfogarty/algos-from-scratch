@@ -22,7 +22,17 @@ from common_fns import tanh, softmax, tanh_gradient
 
 class NeuralNetwork:
 
-    def __init__(self, n_features, n_classes, n_nodes_per_hidden_layer, activation_fn=None, activation_fn_gradient=None, output_activation_fn=None):
+    def __init__(self, n_features, n_classes, n_nodes_per_hidden_layer, activation_fn=None, activation_fn_gradient=None, output_activation_fn=None, loss_tolerance=0.0005, alpha=0.05, lambda_regul=0.0):
+        '''
+        feed forward neural network
+        parameters:
+            n_features, n_classes: int
+            n_nodes_per_hidden_layer: list of int
+            activation_fn, activation_fn_gradient: python functions
+            loss_tolerance: iterate until old_loss - new_loss < loss_tolerance (float)
+            alpha: learning rate (float)
+            lambda_regul: regularisation parameter lambda (float)
+        '''
 
         self.n_features = n_features
         self.n_classes = n_classes
@@ -46,6 +56,10 @@ class NeuralNetwork:
             print('For now, only the gradient of the softmax output activation fn is implemented')
             quit()
             # self.output_activation_fn = output_activation_fn
+
+        self.loss_tolerance = loss_tolerance
+        self.lambda_regul = lambda_regul
+        self.alpha = alpha
 
         self.weights = []
         # node inputs
@@ -109,6 +123,12 @@ class NeuralNetwork:
     def initialize_weights(self):
         # TODOO add different initialisation options
 
+        self.weights = []
+        # node inputs
+        self.a_by_layer = []
+        # node outputs
+        self.z_by_layer = []
+
         print('Initialising weights with dimensions:')
 
         for i in range(1, self.n_layers):
@@ -126,16 +146,17 @@ class NeuralNetwork:
             self.a_by_layer.append(place_holder)
             self.z_by_layer.append(place_holder)
 
-    def fit(self, X, Y, loss_tolerance=0.0005, alpha=0.05, lambda_regul=0.0):
+    def fit(self, X, Y):
         '''backprop and gradient descent to fit self.weights on X and Y
         loss = -1 / n_samples * sum (y*log(y_hat)) + lambda / (2 * n_samples) * sum (w^2)
         inputs:
             X: np.array with dimensions n_samples * n_features
             Y: np.array with dimensions n_samples * n_classes
-            loss_tolerance: iterate until old_loss - new_loss < loss_tolerance
-            alpha: learning rate
-            lambda_regul: regularisation parameter lambda
         '''
+
+        alpha = self.alpha
+        lambda_regul = self.lambda_regul
+        loss_tolerance = self.loss_tolerance
 
         Y = Y.transpose()
         bias = np.ones((X.shape[0], 1))
