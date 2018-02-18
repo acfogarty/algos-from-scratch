@@ -386,7 +386,7 @@ def print_model_test(model, X, Y, score_fn, oh_enc, l_enc):
     print(Y_decoded)
     print('Y_predict_decoded')
     print(Y_predict_decoded)
-    cm = confusion_matrix(Y=Y_predict_decoded, Y_true=Y_decoded, print_matrix=True)
+    cm = confusion_matrix(Y_true=Y_decoded, Y_predict=Y_predict_decoded, print_matrix=True)
     l_enc.print_decoder()
     scores = calculate_scores_from_confusion_matrix(cm)
     for k in scores.keys():
