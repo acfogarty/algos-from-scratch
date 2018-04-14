@@ -26,21 +26,24 @@ with metric = Euclidean distance and linkage criteria = single-linkage
 
 ------------------------------------------------
 
+# scores
+
+sub-directory: `scores`
+
+* ROC-AUC
+
+------------------------------------------------
+
 # Naive Bayes classifier for unlabelled ebook files
 
 sub-directory: `naive_bayes_classifier`
 
-* reads labelled datafiles
-* partitions into training and test sets
-* trains Naive Bayes classifier
 * flag to choose between probabilities and log probabilities
 * flag to switch on/off Laplacian correction (dataset must be big enough!)
 * flag to choose between calculating prior from training set or using uniform prior
 
-Usage:
-
-python classify_skl.py  # uses scikit-learn for comparison
-python classify_scratch.py  # Naive Bayes from scratch
+```classify_skl.py  # uses scikit-learn for comparison
+python classify_scratch.py  # Naive Bayes from scratch```
 
 control variables (vocabulary size, train/test split fraction, flags for Laplacian correction, uniform prior, etc.) all hard-coded
 
