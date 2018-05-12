@@ -45,7 +45,7 @@ class HMM():
         self.gamma = np.zeros((self.n_observations, self.n_hidden_states, self.n_hidden_states), dtype=np.float64)
         self.delta = np.zeros((self.n_observations, self.n_hidden_states), dtype=np.float64)
 
-        for i in range(self.n_iterations):
+        for i in range(n_iterations):
             print('Iteration ', i)
             self.expectation()
             self.maximization()
