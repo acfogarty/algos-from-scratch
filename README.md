@@ -26,6 +26,12 @@ with metric = Euclidean distance and linkage criteria = single-linkage
 
 ------------------------------------------------
 
+# Hidden Markov Model
+
+sub-directory: `hmm`
+
+------------------------------------------------
+
 # scores
 
 sub-directory: `scores`
