@@ -1,9 +1,48 @@
 import numpy as np
 
-# alpha: forward probabilities (from initial estimate of the hidden state at the first data observation)
-# beta: backward probabilities (conditional probability from the final data observation)
-# gamma: estimate of state transition for each data observation (combine forward and backward probabilities)
-# delta: estimate of hidden state for each data observation (sum gamma function across all transitions)
+# #########
+# ## HMM ##
+# #########
+
+# X_t = discrete hidden variable with N distinct values
+# P(X_t | X_{t-1}) is independent of t
+
+# time-independent transition probabilites (N * N matrix):
+# A = {a_ij} = P(X_t = j | X_{t-1} = i)
+
+# initial distribution
+# pi_i = P(X_1 = i)
+
+# Y_t = observation date points with K distinct values
+
+# emission probabilities (N * K matrix)
+# B = {b_j(y_i)} = P(Y_t = y_i | X_t = j)
+
+# theta = (A, B, pi) = (p_transition, p_emission, p_initial)
+
+# ##########################
+# ## Baum-Welch algorithm ##
+# ##########################
+
+# Finds a local maximum for argmax_theta P(Y | theta)
+
+# alpha: forward probabilities, the probability of seeing y1, y2, ... , yt and being in state i at time t  (calculated recursively from initial estimate of the hidden state at the first data observation)
+
+# alpha_i(t) = P(Y1 = y1, ... Yt = yt, Xt = i | theta)
+
+# alpha_i(1) = pi_i * b_i(y_1)
+# alpha_i(t+1) = b_i(y_{t+1}) * sum_{j=1}^N alpha_j(t) * a_ji
+
+# beta: backward probabilities, the probability of the ending partial sequence y_{t+1},...,y_{T} given starting state i at time t (calculated as conditional probability from the final data observation)
+
+# beta_i(t) = P(Y_{t+1} = y_{t+1}, ... Y_T = y_T | X_t = i, theta)
+
+# beta_i(T) = 1
+# beta_i(t) = sum_{j=1}^N beta_j(t+1) * a_ij * b_j(y_{t+1})
+
+# gamma: estimate of probability of being in i at t and j at t+1 given the observed sequence and parameters (combine forward and backward probabilities)
+
+# gamma_ij(t) = P(X_t=i, X_{t+1}=j | Y, theta) = alpha_i(t) * a_ij * beta_j(t+1) * b_j(y_{t+1}) / (sum over i and j)
 
 
 class HMM():
