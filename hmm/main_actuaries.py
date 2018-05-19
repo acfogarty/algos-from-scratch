@@ -21,3 +21,4 @@ n_iterations = 100
 
 model = HMM(p_transmission, p_emission)
 model.train(observations, n_iterations)
+model.print_parameters()

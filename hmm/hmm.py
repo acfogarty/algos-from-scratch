@@ -200,8 +200,8 @@ class HMM():
         # a_ij = sum_{t=1}^{T-1} gamma_ij(t) / sum_{t=1}^{T-1} delta_i(t)
         self.p_transition[:-1, :-1] = np.sum(self.gamma[:-1], axis=0) / np.sum(self.delta[:-1], axis=0).reshape((-1, 1))
 
-        print('self.p_transition')
-        print(self.p_transition)
+        # print('self.p_transition')
+        # print(self.p_transition)
 
     def update_p_emission(self):
         '''
@@ -219,8 +219,8 @@ class HMM():
             temp[t] = np.outer(self.delta[t, :], dirac[t, :])
 
         self.p_emission = np.transpose(np.sum(temp, axis=0) / np.sum(self.delta, axis=0).reshape((-1, 1)))
-        print('self.p_emission')
-        print(self.p_emission)
+        # print('self.p_emission')
+        # print(self.p_emission)
 
     def renumber_observations(self):
         '''
@@ -229,3 +229,42 @@ class HMM():
         '''
 
         return self.observations - min(self.observations)
+
+    def print_parameters(self):
+        '''
+        pretty print model parameters
+        '''
+
+        columns = list(range(self.n_hidden_states)) + ['START']
+        rows = list(range(self.n_hidden_states)) + ['STOP']
+        self.pprint_matrix('transition probabilities', columns, rows, self.p_transition)
+
+        columns = list(range(self.n_hidden_states))
+        rows = self.observation_labels
+        self.pprint_matrix('emission probabilities', columns, rows, self.p_emission)
+
+    def pprint_matrix(self, title, columns, rows, values):
+
+        hstring = 'p(...|{})  '
+        rstring = 'p({}|...)  '
+        indexformatstring = '{{:{}s}}'
+        entryformatstring = '{{:{}f}}'
+       
+        print() 
+        print(title)
+
+        header = ''.join([hstring.format(c) for c in columns])
+        indices = [rstring.format(r) for r in rows]
+
+        ave_header_width = int(len(header) / float(len(columns)))
+        max_index_width = max(len(r) for r in indices)
+        padding = ' ' * max_index_width
+
+        print(padding + header)
+
+        rowformatstring = ''.join([indexformatstring.format(max_index_width)] + [entryformatstring.format(ave_header_width) for c in columns])
+        
+        for index, p in zip(indices, values):
+            print(rowformatstring.format(index, *p))
+
+        print() 

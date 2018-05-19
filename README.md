@@ -30,6 +30,10 @@ with metric = Euclidean distance and linkage criteria = single-linkage
 
 sub-directory: `hmm`
 
+Baum-Welch (EM) algorithm
+
+TODO: switch to logspace for underflow; add Viterbi algorithm
+
 ------------------------------------------------
 
 # scores
