@@ -26,12 +26,18 @@ import numpy as np
 
 # Finds a local maximum for argmax_theta P(Y | theta)
 
+# ----------------
+# Expectation step
+# ----------------
+
 # alpha: forward probabilities, the probability of seeing y1, y2, ... , yt and being in state i at time t  (calculated recursively from initial estimate of the hidden state at the first data observation)
 
 # alpha_i(t) = P(Y1 = y1, ... Yt = yt, Xt = i | theta)
 
 # alpha_i(1) = pi_i * b_i(y_1)
 # alpha_i(t+1) = b_i(y_{t+1}) * sum_{j=1}^N alpha_j(t) * a_ji
+
+# -------------
 
 # beta: backward probabilities, the probability of the ending partial sequence y_{t+1},...,y_{T} given starting state i at time t (calculated as conditional probability from the final data observation)
 
@@ -40,9 +46,30 @@ import numpy as np
 # beta_i(T) = 1
 # beta_i(t) = sum_{j=1}^N beta_j(t+1) * a_ij * b_j(y_{t+1})
 
-# gamma: estimate of probability of being in i at t and j at t+1 given the observed sequence and parameters (combine forward and backward probabilities)
+# -------------
 
-# gamma_ij(t) = P(X_t=i, X_{t+1}=j | Y, theta) = alpha_i(t) * a_ij * beta_j(t+1) * b_j(y_{t+1}) / (sum over i and j)
+# gamma: estimate of probability of being in state i at t and j at t+1 given the observed sequence and parameters (combine forward and backward probabilities)
+
+# gamma_ij(t) = P(X_t=i, X_{t+1}=j | Y, theta) / P(Y | theta) = alpha_i(t) * a_ij * beta_j(t+1) * b_j(y_{t+1}) / (sum over i and j)
+
+# -------------
+
+# delta: estimate of probability of being in state i at t given the observed sequence and parameters
+
+# delta_i(t) = P(X_t=i ? Y ? theta) / P(Y | theta) = alpha_i(t) * beta_i(t) / (sum over i)
+
+# -----------------
+# Maximization step
+# -----------------
+
+# probability to be in state i in initial step
+# pi_i = delta_i(t=1)
+
+# transition probabilities
+# a_ij = sum_{t=1}^{T-1} gamma_ij(t) / sum_{t=1}^{T-1} delta_i(t)
+
+# emission probabilites
+# b_i(v_k) = sum_{t=1}^T dirac(v_k, y_t) * delta_i(t) / sum_{t=1}^T delta_i(t)
 
 
 class HMM():
@@ -107,7 +134,8 @@ class HMM():
         '''
         maximization step of Baum-Welch algorithm
         '''
-        pass
+        self.update_p_transition()
+        self.update_p_emission()
 
     def calc_forward_probabilities(self):
         '''
@@ -119,12 +147,10 @@ class HMM():
         # P(x|START) probabilities are in final column of transition matrix
         self.forward[0] = self.p_transition[:-1, -1] * self.p_emission[self.observation_indices[0]]
 
-        print(self.forward[0])
         # alpha_i(t+1) = b_i(y_{t+1}) * sum_{j=1}^N alpha_j(t) * a_ji
         # don't use final row and column of p_transition because these are for STOP and START states
         for t in range(1, self.n_observations):
             self.forward[t] = self.p_emission[self.observation_indices[t]] * np.dot(self.p_transition[:-1, :-1], self.forward[t-1])
-            print(self.observation_indices[t], self.forward[t])
 
     def calc_backward_probabilities(self):
         '''
@@ -138,7 +164,6 @@ class HMM():
         # beta_i(t) = sum_{j=1}^N beta_j(t+1) * a_ij * b_j(y_{t+1})
         for t in range(self.n_observations-2, -1, -1):
             self.backward[t] = np.sum(self.backward[t+1] * self.p_emission[self.observation_indices[t+1]] * np.transpose(self.p_transition[:-1, :-1]), axis=1)
-            print(self.backward[t])
 
     def calc_gamma(self):
         '''
@@ -152,7 +177,50 @@ class HMM():
                     self.gamma[t,i,j] = self.forward[t,i] * self.p_transition[j,i] * self.backward[t+1,j] * self.p_emission[self.observation_indices[t+1],j]
             denom = np.dot(self.forward[t], self.backward[t])
             self.gamma[t,:,:] /= denom
-            print(self.gamma[t,:,:])
+            #print(self.gamma[t,:,:])
+
+    def calc_delta(self):
+        '''
+        calculate delta by summing over gamma
+        '''
+
+        self.delta = np.sum(self.gamma, axis=2)
+        self.delta[-1] = self.forward[-1] / np.sum(self.forward[-1])
+        #print(self.delta)
+
+    def update_p_transition(self):
+        '''
+        update transition probabilities using the
+        outputs of the expectation step
+        '''
+
+        # update pi (expected probability to be in state i at time 1
+        self.p_transition[:-1, -1] = self.delta[0]
+
+        # a_ij = sum_{t=1}^{T-1} gamma_ij(t) / sum_{t=1}^{T-1} delta_i(t)
+        self.p_transition[:-1, :-1] = np.sum(self.gamma[:-1], axis=0) / np.sum(self.delta[:-1], axis=0).reshape((-1, 1))
+
+        print('self.p_transition')
+        print(self.p_transition)
+
+    def update_p_emission(self):
+        '''
+        update emission probabilities using the
+        outputs of the expectation step
+        '''
+
+        # b_i(v_k) = sum_{t=1}^T dirac(v_k, y_t) * delta_i(t) / sum_{t=1}^T delta_i(t)
+        # make one-hot encoder (dirac delta) of observation data points
+        dirac = np.zeros((self.n_observations, self.n_observation_classes), dtype=np.float64)
+        dirac[np.arange(self.n_observations), self.observation_indices] = 1.0
+        # TODOO vectorize
+        temp = np.zeros((self.n_observations, self.n_hidden_states, self.n_observation_classes))
+        for t in range(self.n_observations):
+            temp[t] = np.outer(self.delta[t, :], dirac[t, :])
+
+        self.p_emission = np.transpose(np.sum(temp, axis=0) / np.sum(self.delta, axis=0).reshape((-1, 1)))
+        print('self.p_emission')
+        print(self.p_emission)
 
     def renumber_observations(self):
         '''

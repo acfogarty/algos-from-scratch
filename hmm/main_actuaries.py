@@ -17,7 +17,7 @@ p_transmission = np.array([ [0.7, 0.5, 0.5], [0.3, 0.5, 0.5], [0.0, 0.0, 0.0] ])
 # observation data points (number of ice creams)
 observations = [2, 1, 0, 1, 2, 0, 1, 1, 0, 1, 1, 2, 0, 0, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2 ]
 
-n_iterations = 10
+n_iterations = 100
 
 model = HMM(p_transmission, p_emission)
 model.train(observations, n_iterations)
