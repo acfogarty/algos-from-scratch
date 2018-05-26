@@ -1,4 +1,8 @@
 import numpy as np
+import matplotlib.pyplot as plt
+
+# TODOO 
+# tranpose transition matrix
 
 # #########
 # ## HMM ##
@@ -91,6 +95,10 @@ class HMM():
         self.n_hidden_states = p_transition.shape[0] - 1
         self.n_observation_classes = p_emission.shape[0]
 
+        # check probabilities sum to 1
+        assert(np.allclose(np.sum(self.p_emission, axis=0), np.ones((self.n_hidden_states), dtype=np.float64)))
+        assert(np.allclose(np.sum(self.p_transition, axis=0), np.ones((self.n_hidden_states + 1), dtype=np.float64)))
+
     def train(self, observations, n_iterations):
         '''
         input:
@@ -102,7 +110,7 @@ class HMM():
         self.n_observations = len(observations)
 
         # convert observation datapoints to indices starting from 0
-        self.observation_indices = self.renumber_observations()
+        self.observation_indices = self.renumber_observations(self.observations)
 
         # all unique observation labels
         self.observation_labels = list(np.unique(observations))
@@ -117,7 +125,6 @@ class HMM():
         self.delta = np.zeros((self.n_observations, self.n_hidden_states), dtype=np.float64)
 
         for i in range(n_iterations):
-            print('Iteration ', i)
             self.expectation()
             self.maximization()
 
@@ -222,13 +229,13 @@ class HMM():
         # print('self.p_emission')
         # print(self.p_emission)
 
-    def renumber_observations(self):
+    def renumber_observations(self, observations):
         '''
         we want to use observation data points directly as indices of the emission matrix
         returns set of observation data points numbered starting at 0
         '''
 
-        return self.observations - min(self.observations)
+        return observations - min(observations)
 
     def print_parameters(self):
         '''
@@ -244,6 +251,9 @@ class HMM():
         self.pprint_matrix('emission probabilities', columns, rows, self.p_emission)
 
     def pprint_matrix(self, title, columns, rows, values):
+        '''
+        pretty print a single matrix
+        '''
 
         hstring = 'p(...|{})  '
         rstring = 'p({}|...)  '
@@ -268,3 +278,44 @@ class HMM():
             print(rowformatstring.format(index, *p))
 
         print() 
+
+    def viterbi(self, observations, plot=False):
+        '''
+        given transition and emission probabilities and a sequence of observed events,
+        find the most likely sequence of hidden states
+        input:
+            observations (list of int): sequence of observed events
+        The observations used to train the hmm (self.observations) are not used
+        '''
+
+        observations = np.asarray(observations)
+        n_observations = len(observations)
+        observation_indices = self.renumber_observations(observations)
+
+        # check there aren't more unique values in the data than in the model
+        assert(len(set(observation_indices))) <= self.n_observation_classes
+
+        t1 = np.zeros((self.n_hidden_states, n_observations), dtype=np.float64)
+        t2 = np.zeros((self.n_hidden_states, n_observations), dtype=np.int64)
+
+        states = np.zeros(n_observations, dtype=np.int64)
+
+        # t1_{i,1} = pi_i * b_i(y_1)
+        t1[:, 0] = self.p_transition[:-1, -1] * self.p_emission[observation_indices[0], :]
+
+        for t in range(1, n_observations):
+            s = t1[:, t-1] * self.p_transition[:-1, :-1] * self.p_emission[observation_indices[t]].reshape(-1, 1)
+            t1[:, t] = np.max(s, axis=1)
+            t2[:, t] = np.argmax(s, axis=1)
+
+        states[-1] = np.argmax(t1[:, -1])
+        for t in range(n_observations-1, 0, -1):
+            states[t-1] = t2[states[t], t]
+
+        if plot:
+            plt.plot(states, label='hidden states from viterbi')
+            plt.plot(observations, label='observations')
+            plt.legend()
+            plt.show()
+
+        return states
