@@ -18,11 +18,15 @@ regression tree (main_regression.py) or classification tree (main_classification
 
 ------------------------------------------------
 
-# hierarchical agglomerative clustering
+# clustering algorithms
 
-sub-directory: `hac`
+sub-directory: `clustering`
 
-with metric = Euclidean distance and linkage criteria = single-linkage
+* hierarchical agglomerative clustering (with metric = Euclidean distance and linkage criteria = single-linkage)
+
+* DBSCAN (with metric = Euclidean distance)
+
+* Gaussian Mixture Model (EM algorithm)
 
 ------------------------------------------------
 
