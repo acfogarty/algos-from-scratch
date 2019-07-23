@@ -56,8 +56,17 @@ sub-directory: `naive_bayes_classifier`
 * flag to switch on/off Laplacian correction (dataset must be big enough!)
 * flag to choose between calculating prior from training set or using uniform prior
 
-```classify_skl.py  # uses scikit-learn for comparison
-python classify_scratch.py  # Naive Bayes from scratch```
+```
+classify_scratch.py  # Naive Bayes from scratch
+classify_skl.py  # uses scikit-learn for comparison
+```
 
-control variables (vocabulary size, train/test split fraction, flags for Laplacian correction, uniform prior, etc.) all hard-coded
+------------------------------------------------
 
+# miscellaneous
+
+sub-directory: `misc`
+
+* properties of hash functions
+* Kernel Density Estimation
+* data structures (queue, linked list etc.)
