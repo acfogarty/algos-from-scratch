@@ -40,6 +40,14 @@ TODO: switch to logspace for underflow; add Viterbi algorithm
 
 ------------------------------------------------
 
+# Self-Organising Map
+
+sub-directory: `som`
+
+With visualisation via U-matrix
+
+------------------------------------------------
+
 # scores
 
 sub-directory: `scores`
